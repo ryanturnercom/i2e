@@ -1,0 +1,40 @@
+run_id: 2026-05-20-679c25
+capability: fast-tick-noop
+intent_version: 2
+collected_at: '2026-05-20T15:56:27.969622Z'
+items:
+  noop-tick-under-100ms:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-20T15:56:26.325524Z'
+    pending: null
+    raw: {}
+  short-circuit-on-drafts:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-20T15:56:26.730267Z'
+    pending: null
+    raw: {}
+  cache-invalidates-on-mtime:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-20T15:56:27.143451Z'
+    pending: null
+    raw: {}
+  invalid-intent-still-fails-after-edit:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-20T15:56:27.571002Z'
+    pending: null
+    raw: {}
+  tick-contract-unchanged:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-20T15:56:27.969622Z'
+    pending: null
+    raw: {}

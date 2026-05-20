@@ -19,8 +19,10 @@ Parse `$ARGUMENTS`:
 1. Read the current version from `pyproject.toml` — the `version = "X.Y.Z"`
    line under `[project]`. Compute `NEW_VERSION` from the bump type.
 
-2. Verify the working tree is clean (`git status --short`). If there are
-   uncommitted changes, stop and tell the user to commit or stash first.
+2. Snapshot the working tree state (`git status --short`). Any uncommitted
+   or untracked files will be folded into the release commit at step 6 —
+   the release command commits everything. Briefly report what will be
+   swept in so the user knows what's about to ship.
 
 3. Edit `pyproject.toml`: replace the existing `version = "..."` under
    `[project]` with `version = "NEW_VERSION"`. Do NOT touch
@@ -39,7 +41,8 @@ Parse `$ARGUMENTS`:
    All three should show `NEW_VERSION`. If any still shows the old version,
    stop and investigate.
 
-6. Stage all changes: `git add -A`. Then commit:
+6. Stage all changes (including any pre-existing modifications and untracked
+   files from step 2): `git add -A`. Then commit:
 
    ```
    git commit -m "release: vNEW_VERSION"
@@ -48,6 +51,9 @@ Parse `$ARGUMENTS`:
    Use a heredoc-style message with the Co-Authored-By trailer per project
    convention. If a pre-commit hook fails, fix the underlying issue and
    create a NEW commit — never use `--amend` or `--no-verify`.
+
+   Note: this is intentionally a single bundled commit. The release sweeps
+   in whatever is dirty at the time it runs.
 
 7. Tag the commit: `git tag vNEW_VERSION`.
 

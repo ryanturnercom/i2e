@@ -157,12 +157,12 @@
   <div>
     <h1>intent-based_simplified <span class="banner-meta">— i2e report</span></h1>
     <div class="banner-meta">
-      Generated at 1970-01-01 00:00:00Z
+      Generated at 2026-05-20 15:56:49Z · last tick 2026-05-20-9b0619
     </div>
   </div>
   <div>
     
-      <span class="shippable yellow">In progress</span>
+      <span class="shippable green">Shippable</span>
     
     <div class="served-by">
       Served via http://127.0.0.1:63182/
@@ -174,21 +174,91 @@
 <h2>Capabilities</h2>
 
 
+<section class="card" id="cap/fast-tick-noop">
+  <h3>fast-tick-noop <span class="cap-meta">— v2 · active · watcher @ryan</span></h3>
+  <div class="summary-line">
+    pass: 5
+  </div>
+  <div class="item-grid">
+    
+    <div class="item" id="item/fast-tick-noop/cache-invalidates-on-mtime">
+      <span class="id">cache-invalidates-on-mtime</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/6 attempts
+         · last 2026-05-20 15:56:27Z
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/fast-tick-noop/invalid-intent-still-fails-after-edit">
+      <span class="id">invalid-intent-still-fails-after-edit</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/6 attempts
+         · last 2026-05-20 15:56:27Z
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/fast-tick-noop/noop-tick-under-100ms">
+      <span class="id">noop-tick-under-100ms</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/6 attempts
+         · last 2026-05-20 15:56:26Z
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/fast-tick-noop/short-circuit-on-drafts">
+      <span class="id">short-circuit-on-drafts</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/3 attempts
+         · last 2026-05-20 15:56:26Z
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/fast-tick-noop/tick-contract-unchanged">
+      <span class="id">tick-contract-unchanged</span>
+      <span class="type">constraint · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/3 attempts
+         · last 2026-05-20 15:56:27Z
+        
+      </span>
+    </div>
+    
+  </div>
+</section>
+
 <section class="card" id="cap/report-shows-drafts">
   <h3>report-shows-drafts <span class="cap-meta">— v1 · active · watcher @ryan</span></h3>
   <div class="summary-line">
-    none: 5
+    pass: 5
   </div>
   <div class="item-grid">
     
     <div class="item" id="item/report-shows-drafts/active-section-excludes-drafts">
       <span class="id">active-section-excludes-drafts</span>
       <span class="type">case · pytest</span>
-      <span class="pill none">no data</span>
+      <span class="pill pass">pass</span>
       
       <span class="meta">
         0/3 attempts
-        
+         · last 2026-05-20 15:38:31Z
         
       </span>
     </div>
@@ -196,11 +266,11 @@
     <div class="item" id="item/report-shows-drafts/draft-caps-in-view-model">
       <span class="id">draft-caps-in-view-model</span>
       <span class="type">case · pytest</span>
-      <span class="pill none">no data</span>
+      <span class="pill pass">pass</span>
       
       <span class="meta">
         0/6 attempts
-        
+         · last 2026-05-20 15:38:30Z
         
       </span>
     </div>
@@ -208,11 +278,11 @@
     <div class="item" id="item/report-shows-drafts/draft-section-in-html">
       <span class="id">draft-section-in-html</span>
       <span class="type">case · pytest</span>
-      <span class="pill none">no data</span>
+      <span class="pill pass">pass</span>
       
       <span class="meta">
         0/6 attempts
-        
+         · last 2026-05-20 15:38:31Z
         
       </span>
     </div>
@@ -220,11 +290,11 @@
     <div class="item" id="item/report-shows-drafts/drafts-do-not-affect-shippable">
       <span class="id">drafts-do-not-affect-shippable</span>
       <span class="type">case · pytest</span>
-      <span class="pill none">no data</span>
+      <span class="pill pass">pass</span>
       
       <span class="meta">
         0/3 attempts
-        
+         · last 2026-05-20 15:38:31Z
         
       </span>
     </div>
@@ -232,11 +302,11 @@
     <div class="item" id="item/report-shows-drafts/retired-still-hidden">
       <span class="id">retired-still-hidden</span>
       <span class="type">constraint · pytest</span>
-      <span class="pill none">no data</span>
+      <span class="pill pass">pass</span>
       
       <span class="meta">
         0/3 attempts
-        
+         · last 2026-05-20 15:38:32Z
         
       </span>
     </div>
@@ -301,8 +371,20 @@
 
 <h2>Recent ticks</h2>
 
-  <section class="card"><em>No tick logs yet.</em></section>
 
+<article class="card tick" id="tick/2026-05-20-9b0619">
+  <div class="tick-header">2026-05-20-9b0619 <span class="cap-meta">— 2026-05-20 15:56:49Z</span></div>
+  <ul>
+    <li>develop: fast-tick-noop (intent v2 first develop; new=5 changed=0 removed=0; files_touched=2)</li><li>evidence: fast-tick-noop pass=5 fail=0 met=0 unmet=0 awaiting=0</li>
+  </ul>
+</article>
+
+<article class="card tick" id="tick/2026-05-20-137c76">
+  <div class="tick-header">2026-05-20-137c76 <span class="cap-meta">— 2026-05-20 15:39:01Z</span></div>
+  <ul>
+    <li>develop: report-shows-drafts (intent v1 first develop; new=5 changed=0 removed=0; files_touched=4)</li><li>evidence: report-shows-drafts pass=5 fail=0 met=0 unmet=0 awaiting=0</li>
+  </ul>
+</article>
 
 
 </main>

@@ -41,6 +41,7 @@ CLI
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -56,7 +57,7 @@ from .config import load_config
 from .develop import scoped_capabilities
 from .evidence import read_current
 from .intent import parse_intent
-from .paths import intents_dir
+from .paths import i2e_dir, intents_dir
 from .pending import list_resolved_pending
 from .provider.discovery import installed_provider_names
 from .report import render
@@ -124,6 +125,56 @@ class PreflightFailed(Exception):
         super().__init__("\n".join(lines))
 
 
+def _preflight_cache_path(root: Path) -> Path:
+    return i2e_dir(Path(root)) / ".preflight_cache.json"
+
+
+def _intents_mtime_hash(root: Path) -> str:
+    """Stable hash of ``{intent_name: mtime_ns}`` over ``.i2e/intents/*.md``.
+
+    Used to detect when no intent file has changed since the last green
+    preflight; in that case we can safely skip re-parsing every intent.
+    """
+    base = intents_dir(Path(root))
+    if not base.exists():
+        return "no-intents-dir"
+    parts: list[str] = []
+    for p in sorted(base.glob("*.md")):
+        try:
+            mtime_ns = p.stat().st_mtime_ns
+        except OSError:
+            continue
+        parts.append(f"{p.name}:{mtime_ns}")
+    return hashlib.sha256("\n".join(parts).encode("utf-8")).hexdigest()
+
+
+def _read_preflight_cache_hash(root: Path) -> str | None:
+    p = _preflight_cache_path(root)
+    if not p.exists():
+        return None
+    try:
+        data = json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    h = data.get("hash") if isinstance(data, dict) else None
+    return h if isinstance(h, str) else None
+
+
+def _write_preflight_cache(root: Path, hash_val: str) -> None:
+    p = _preflight_cache_path(root)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps({"hash": hash_val}), encoding="utf-8")
+
+
+def _invalidate_preflight_cache(root: Path) -> None:
+    p = _preflight_cache_path(root)
+    if p.exists():
+        try:
+            p.unlink()
+        except OSError:
+            pass
+
+
 def preflight(root: Path) -> PreflightResult:
     """Re-run forced-evidence + effort-tier validation over every active intent.
 
@@ -135,14 +186,27 @@ def preflight(root: Path) -> PreflightResult:
 
     Drafts and retired intents are skipped — drafts are by definition
     work-in-progress, retired intents are frozen.
+
+    A green result is cached in ``.i2e/.preflight_cache.json`` keyed by the
+    hash of every intent file's mtime. On the next tick, if no intent file
+    has been touched, the cache short-circuits the parse+validate pass.
+    Any mtime change (edit, add, remove) invalidates the cache.
     """
     root = Path(root)
+
+    # Fast path: cached green result still applies.
+    current_hash = _intents_mtime_hash(root)
+    cached_hash = _read_preflight_cache_hash(root)
+    if cached_hash is not None and cached_hash == current_hash:
+        return PreflightResult(valid=True, errors={})
+
     cfg = load_config(root)
     providers = installed_provider_names()
     base = intents_dir(root)
     errors: dict[str, list[str]] = {}
 
     if not base.exists():
+        _write_preflight_cache(root, current_hash)
         return PreflightResult(valid=True, errors={})
 
     for path in sorted(base.glob("*.md")):
@@ -157,6 +221,11 @@ def preflight(root: Path) -> PreflightResult:
             validate_capability_with_config(cap, cfg, providers)
         except ValidationError as ve:
             errors.setdefault(cap.frontmatter.capability, []).extend(ve.errors)
+
+    if errors:
+        _invalidate_preflight_cache(root)
+    else:
+        _write_preflight_cache(root, current_hash)
 
     return PreflightResult(valid=not errors, errors=errors)
 
@@ -268,8 +337,18 @@ def decide(root: Path) -> Action:
     """
     root = Path(root)
 
+    # Fast-path short-circuit: if there are no active capabilities AND no
+    # resolved pendings on disk, none of the five branches can fire — every
+    # one of them is gated on either an active capability or a resolved
+    # pending. Skipping straight to ``Shippable`` lets a no-op tick avoid
+    # the pending walk, current.yaml reads, and target-window math.
+    resolved = list_resolved_pending(root)
+    active = _active_capabilities(root)
+    if not resolved and not active:
+        return Shippable()
+
     # Branch 1: resolved pending files awaiting application.
-    if list_resolved_pending(root):
+    if resolved:
         return ApplyResolutions()
 
     # Branch 2: an active capability needs develop (new or version-bumped).
@@ -281,7 +360,6 @@ def decide(root: Path) -> Action:
         return DevelopAndEvidence(capability=scoped_sorted[0])
 
     # Branch 3: a capability has retry-eligible items.
-    active = _active_capabilities(root)
     for cap_slug in active:
         try:
             pl = adapt.plan(root, cap_slug)

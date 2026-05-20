@@ -1,0 +1,6 @@
+tick_id: 2026-05-20-137c76
+ran_at: '2026-05-20T15:39:01.676794Z'
+actions:
+- 'develop: report-shows-drafts (intent v1 first develop; new=5 changed=0 removed=0;
+  files_touched=4)'
+- 'evidence: report-shows-drafts pass=5 fail=0 met=0 unmet=0 awaiting=0'
