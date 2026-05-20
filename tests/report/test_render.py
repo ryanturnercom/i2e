@@ -138,3 +138,27 @@ def test_render_serve_url_banner(
 def test_render_no_capabilities_message(project: Path) -> None:
     html = render_to_string(project)
     assert "No active capabilities yet." in html
+
+
+def test_html_has_drafts_section(
+    project: Path, write_intent, write_current_for
+) -> None:
+    write_intent("alpha", evidence=_basic_evidence(), version=1, status="active")
+    write_current_for(
+        "alpha",
+        {"case-a": {"verdict": "pass", "attempts_used": 0}},
+        intent_version=1,
+    )
+    write_intent(
+        "wip-feature", evidence=_basic_evidence(), version=1, status="draft"
+    )
+    html = render_to_string(project)
+    # Drafts heading and a draft-specific deep-link id should be present.
+    assert "Drafts" in html
+    assert 'id="draft/wip-feature"' in html
+    # Active capability still appears under its own heading.
+    assert 'id="cap/alpha"' in html
+    # When there are no drafts, the section should not render.
+    (project / ".i2e" / "intents" / "wip-feature.md").unlink()
+    html2 = render_to_string(project)
+    assert 'id="draft/wip-feature"' not in html2
