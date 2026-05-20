@@ -113,6 +113,25 @@
   .item .meta { color: var(--muted); font-size: 12px; margin-left: auto; }
   .cap-meta { color: var(--muted); font-size: 12px; margin-bottom: 4px; }
   .summary-line { color: var(--muted); font-size: 12px; margin-top: 6px; }
+  section.draft {
+    border-style: dashed;
+    background: #fafafa;
+  }
+  section.draft > h3::after {
+    content: "draft";
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--pill-awaiting-bg);
+    color: var(--pill-awaiting-fg);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    vertical-align: middle;
+  }
+  h2.drafts-heading { color: var(--muted); }
   details.card summary { cursor: pointer; font-weight: 600; }
   textarea.resolution {
     width: 100%;
@@ -181,6 +200,33 @@
   </div>
 </section>
 {% endfor %}
+
+{% if drafts %}
+<h2 class="drafts-heading">Drafts</h2>
+{% for cap in drafts %}
+<section class="card draft" id="draft/{{ cap.slug }}">
+  <h3>{{ cap.slug }} <span class="cap-meta">— v{{ cap.version }} · {{ cap.status }} · watcher {{ cap.watcher }}</span></h3>
+  <div class="summary-line">
+    {% for verdict, count in cap.summary_sorted %}{{ verdict }}: {{ count }}{% if not loop.last %} · {% endif %}{% endfor %}
+  </div>
+  <div class="item-grid">
+    {% for item in cap.items %}
+    <div class="item" id="draft-item/{{ cap.slug }}/{{ item.id }}">
+      <span class="id">{{ item.id }}</span>
+      <span class="type">{{ item.type }}{% if item.provider %} · {{ item.provider }}{% endif %}</span>
+      <span class="pill {{ item.verdict_class }}">{{ item.verdict_label }}</span>
+      {% if item.value is not none %}<span class="value">{{ item.value }}</span>{% endif %}
+      <span class="meta">
+        {{ item.attempts_used }}/{{ item.max_attempts }} attempts
+        {% if item.last_observed %} · last {{ item.last_observed }}{% endif %}
+        {% if item.pending_basename %} · pending {{ item.pending_basename }}{% endif %}
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endfor %}
+{% endif %}
 
 <h2>Pending queue</h2>
 {% if not pending %}

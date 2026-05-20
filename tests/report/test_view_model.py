@@ -113,6 +113,64 @@ def test_skips_non_active_intents(
     assert vm.capabilities == []
 
 
+def test_drafts_listed_separately(
+    project: Path, write_intent, write_current_for
+) -> None:
+    write_intent("alpha", evidence=_basic_evidence(), version=1, status="active")
+    write_intent("zeta-draft", evidence=_basic_evidence(), version=1, status="draft")
+    write_intent("beta-draft", evidence=_basic_evidence(), version=1, status="draft")
+    vm = build_view_model(project)
+    assert [c.slug for c in vm.capabilities] == ["alpha"]
+    assert [c.slug for c in vm.drafts] == ["beta-draft", "zeta-draft"]
+    # Drafts with no current.yaml render their items as "no data".
+    draft = vm.drafts[0]
+    assert all(i.verdict == "none" for i in draft.items)
+
+
+def test_active_capabilities_excludes_drafts(
+    project: Path, write_intent, write_current_for
+) -> None:
+    write_intent("draft-cap", evidence=_basic_evidence(), version=1, status="draft")
+    write_intent("active-cap", evidence=_basic_evidence(), version=1, status="active")
+    vm = build_view_model(project)
+    active_slugs = [c.slug for c in vm.capabilities]
+    assert "draft-cap" not in active_slugs
+    assert active_slugs == ["active-cap"]
+
+
+def test_shippable_ignores_drafts(
+    project: Path, write_intent, write_current_for
+) -> None:
+    # Active capability is fully green.
+    write_intent("alpha", evidence=_basic_evidence(), version=1, status="active")
+    write_current_for(
+        "alpha",
+        {
+            "case-a": {"verdict": "pass", "attempts_used": 0},
+            "target-b": {"verdict": "met", "attempts_used": 0},
+        },
+        intent_version=1,
+    )
+    # Draft has no evidence — would normally make a capability non-shippable.
+    write_intent("draft-cap", evidence=_basic_evidence(), version=1, status="draft")
+    vm = build_view_model(project)
+    assert vm.shippable is True
+
+
+def test_retired_capabilities_hidden(
+    project: Path, write_intent, write_current_for
+) -> None:
+    write_intent("retired-cap", evidence=_basic_evidence(), version=1, status="retired")
+    write_intent("active-cap", evidence=_basic_evidence(), version=1, status="active")
+    write_intent("draft-cap", evidence=_basic_evidence(), version=1, status="draft")
+    vm = build_view_model(project)
+    assert [c.slug for c in vm.capabilities] == ["active-cap"]
+    assert [c.slug for c in vm.drafts] == ["draft-cap"]
+    # Retired must not appear in either bucket.
+    all_slugs = [c.slug for c in vm.capabilities] + [c.slug for c in vm.drafts]
+    assert "retired-cap" not in all_slugs
+
+
 def test_capabilities_sorted_by_slug(
     project: Path, write_intent, write_current_for
 ) -> None:

@@ -113,6 +113,25 @@
   .item .meta { color: var(--muted); font-size: 12px; margin-left: auto; }
   .cap-meta { color: var(--muted); font-size: 12px; margin-bottom: 4px; }
   .summary-line { color: var(--muted); font-size: 12px; margin-top: 6px; }
+  section.draft {
+    border-style: dashed;
+    background: #fafafa;
+  }
+  section.draft > h3::after {
+    content: "draft";
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--pill-awaiting-bg);
+    color: var(--pill-awaiting-fg);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    vertical-align: middle;
+  }
+  h2.drafts-heading { color: var(--muted); }
   details.card summary { cursor: pointer; font-weight: 600; }
   textarea.resolution {
     width: 100%;
@@ -143,7 +162,7 @@
   </div>
   <div>
     
-      <span class="shippable green">Shippable</span>
+      <span class="shippable yellow">In progress</span>
     
     <div class="served-by">
       Served via http://127.0.0.1:63182/
@@ -154,6 +173,76 @@
 
 <h2>Capabilities</h2>
 
+
+<section class="card" id="cap/report-shows-drafts">
+  <h3>report-shows-drafts <span class="cap-meta">— v1 · active · watcher @ryan</span></h3>
+  <div class="summary-line">
+    none: 5
+  </div>
+  <div class="item-grid">
+    
+    <div class="item" id="item/report-shows-drafts/active-section-excludes-drafts">
+      <span class="id">active-section-excludes-drafts</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/3 attempts
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/report-shows-drafts/draft-caps-in-view-model">
+      <span class="id">draft-caps-in-view-model</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/6 attempts
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/report-shows-drafts/draft-section-in-html">
+      <span class="id">draft-section-in-html</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/6 attempts
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/report-shows-drafts/drafts-do-not-affect-shippable">
+      <span class="id">drafts-do-not-affect-shippable</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/3 attempts
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/report-shows-drafts/retired-still-hidden">
+      <span class="id">retired-still-hidden</span>
+      <span class="type">constraint · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/3 attempts
+        
+        
+      </span>
+    </div>
+    
+  </div>
+</section>
 
 <section class="card" id="cap/serve-cli-blocks">
   <h3>serve-cli-blocks <span class="cap-meta">— v1 · active · watcher @ryan</span></h3>
@@ -200,6 +289,8 @@
     
   </div>
 </section>
+
+
 
 
 <h2>Pending queue</h2>

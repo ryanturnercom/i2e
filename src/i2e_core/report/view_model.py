@@ -119,6 +119,7 @@ class ReportViewModel(BaseModel):
     last_tick_id: str | None = None
     shippable: bool
     capabilities: list[CapabilityView] = Field(default_factory=list)
+    drafts: list[CapabilityView] = Field(default_factory=list)
     pending: list[PendingView] = Field(default_factory=list)
     ticks: list[TickView] = Field(default_factory=list)
     serve_url: str | None = None
@@ -145,7 +146,9 @@ def _format_dt(dt: datetime | None) -> str | None:
     return dt.strftime("%Y-%m-%d %H:%M:%SZ")
 
 
-def _list_active_capabilities(root: Path) -> list[Capability]:
+def _list_capabilities_by_status(
+    root: Path, status: str
+) -> list[Capability]:
     base = intents_dir(Path(root))
     if not base.exists():
         return []
@@ -155,10 +158,18 @@ def _list_active_capabilities(root: Path) -> list[Capability]:
             cap = parse_intent(path)
         except Exception:
             continue
-        if cap.frontmatter.status == "active":
+        if cap.frontmatter.status == status:
             out.append(cap)
     out.sort(key=lambda c: c.frontmatter.capability)
     return out
+
+
+def _list_active_capabilities(root: Path) -> list[Capability]:
+    return _list_capabilities_by_status(root, "active")
+
+
+def _list_draft_capabilities(root: Path) -> list[Capability]:
+    return _list_capabilities_by_status(root, "draft")
 
 
 def _build_item_view(
@@ -321,6 +332,12 @@ def build_view_model(root: Path) -> ReportViewModel:
         cur = read_current(root, cap.frontmatter.capability)
         capabilities.append(_build_capability_view(cap, cur, cfg))
 
+    drafts_raw = _list_draft_capabilities(root)
+    drafts: list[CapabilityView] = []
+    for cap in drafts_raw:
+        cur = read_current(root, cap.frontmatter.capability)
+        drafts.append(_build_capability_view(cap, cur, cfg))
+
     pending_views: list[PendingView] = []
     for path in list_open_pending(root):
         pv = _build_pending_view(path)
@@ -349,6 +366,7 @@ def build_view_model(root: Path) -> ReportViewModel:
         last_tick_id=last_tick_id,
         shippable=shippable,
         capabilities=capabilities,
+        drafts=drafts,
         pending=pending_views,
         ticks=ticks,
         serve_url=_read_serve_url(root),
@@ -385,6 +403,7 @@ def render_to_string(root: Path) -> str:
         last_tick_id=vm.last_tick_id,
         shippable=vm.shippable,
         capabilities=vm.capabilities,
+        drafts=vm.drafts,
         pending=vm.pending,
         ticks=vm.ticks,
         serve_url=vm.serve_url,
