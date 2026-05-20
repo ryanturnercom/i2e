@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "i2e_core"
+version = "0.1.0"
+description = "Shared core for the Intent-to-Evidence (Simplified) SDLC."
+requires-python = ">=3.11"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Ryan Turner", email = "ryan@ryanturner.com" }]
+dependencies = [
+    "pydantic>=2",
+    "PyYAML>=6",
+    "python-frontmatter>=1.1",
+    "jinja2>=3",
+    "watchdog>=4",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-cov",
+]
+ga = [
+    "google-auth>=2",
+    "google-analytics-data>=0.18",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"i2e_core" = ["skills/**/*.md", "skills/**/*.py", "report/templates/*.j2"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra -m 'not e2e'"
+markers = [
+    "e2e: end-to-end smoke tests (opt-in; pass -m e2e to run)",
+]
+
+[tool.coverage.run]
+source = ["i2e_core"]
+branch = true

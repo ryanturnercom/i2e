@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{ project_name }} — i2e report</title>
+<style>
+  :root {
+    --bg: #f7f7f8;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --text: #111827;
+    --muted: #6b7280;
+    --pill-pass-bg: #dcfce7;     /* green-100 */
+    --pill-pass-fg: #166534;     /* green-800 */
+    --pill-met-bg: #d1fae5;      /* emerald-100 */
+    --pill-met-fg: #065f46;      /* emerald-800 */
+    --pill-fail-bg: #fee2e2;     /* red-100 */
+    --pill-fail-fg: #991b1b;     /* red-800 */
+    --pill-unmet-bg: #ffedd5;    /* orange-100 */
+    --pill-unmet-fg: #9a3412;    /* orange-800 */
+    --pill-trending-bg: #fef9c3; /* yellow-100 */
+    --pill-trending-fg: #854d0e; /* yellow-800 */
+    --pill-awaiting-bg: #e5e7eb; /* gray-200 */
+    --pill-awaiting-fg: #374151; /* gray-700 */
+    --shippable-green-bg: #16a34a;
+    --shippable-yellow-bg: #ca8a04;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  header.banner {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+  }
+  header.banner h1 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .banner-meta { color: var(--muted); font-size: 12px; }
+  .served-by { color: var(--muted); font-size: 12px; }
+  main { padding: 16px 24px 48px 24px; max-width: 1100px; margin: 0 auto; }
+  section.card, article.card, details.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin: 12px 0;
+  }
+  .shippable {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 999px;
+    color: white;
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .shippable.green { background: var(--shippable-green-bg); }
+  .shippable.yellow { background: var(--shippable-yellow-bg); }
+  h2 { font-size: 16px; margin: 24px 0 8px 0; }
+  h3 { font-size: 15px; margin: 0 0 6px 0; }
+  .pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .pill.pass { background: var(--pill-pass-bg); color: var(--pill-pass-fg); }
+  .pill.met { background: var(--pill-met-bg); color: var(--pill-met-fg); }
+  .pill.fail { background: var(--pill-fail-bg); color: var(--pill-fail-fg); }
+  .pill.unmet { background: var(--pill-unmet-bg); color: var(--pill-unmet-fg); }
+  .pill.trending { background: var(--pill-trending-bg); color: var(--pill-trending-fg); }
+  .pill.awaiting { background: var(--pill-awaiting-bg); color: var(--pill-awaiting-fg); }
+  .pill.none { background: var(--pill-awaiting-bg); color: var(--pill-awaiting-fg); }
+  .item-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .item {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    background: #fbfbfc;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+  .item .id { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 600; }
+  .item .type { color: var(--muted); font-size: 12px; }
+  .item .value {
+    color: var(--text);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12px;
+  }
+  .item .meta { color: var(--muted); font-size: 12px; margin-left: auto; }
+  .cap-meta { color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+  .summary-line { color: var(--muted); font-size: 12px; margin-top: 6px; }
+  details.card summary { cursor: pointer; font-weight: 600; }
+  textarea.resolution {
+    width: 100%;
+    min-height: 80px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12px;
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-top: 8px;
+  }
+  article.tick { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+  article.tick .tick-header { font-weight: 600; margin-bottom: 4px; }
+  article.tick ul { margin: 4px 0 0 18px; padding: 0; }
+  @media (max-width: 600px) {
+    main { padding: 12px; }
+    header.banner { padding: 12px; }
+  }
+</style>
+</head>
+<body>
+<header class="banner">
+  <div>
+    <h1>{{ project_name }} <span class="banner-meta">— i2e report</span></h1>
+    <div class="banner-meta">
+      Generated at {{ generated_at_display }}{% if last_tick_id %} · last tick {{ last_tick_id }}{% endif %}
+    </div>
+  </div>
+  <div>
+    {% if shippable %}
+      <span class="shippable green">Shippable</span>
+    {% else %}
+      <span class="shippable yellow">In progress</span>
+    {% endif %}
+    <div class="served-by">
+      {% if serve_url %}Served via {{ serve_url }}{% else %}Opened via file://{% endif %}
+    </div>
+  </div>
+</header>
+<main>
+
+<h2>Capabilities</h2>
+{% if not capabilities %}
+  <section class="card"><em>No active capabilities yet.</em></section>
+{% endif %}
+{% for cap in capabilities %}
+<section class="card" id="cap/{{ cap.slug }}">
+  <h3>{{ cap.slug }} <span class="cap-meta">— v{{ cap.version }} · {{ cap.status }} · watcher {{ cap.watcher }}</span></h3>
+  <div class="summary-line">
+    {% for verdict, count in cap.summary_sorted %}{{ verdict }}: {{ count }}{% if not loop.last %} · {% endif %}{% endfor %}
+  </div>
+  <div class="item-grid">
+    {% for item in cap.items %}
+    <div class="item" id="item/{{ cap.slug }}/{{ item.id }}">
+      <span class="id">{{ item.id }}</span>
+      <span class="type">{{ item.type }}{% if item.provider %} · {{ item.provider }}{% endif %}</span>
+      <span class="pill {{ item.verdict_class }}">{{ item.verdict_label }}</span>
+      {% if item.value is not none %}<span class="value">{{ item.value }}</span>{% endif %}
+      <span class="meta">
+        {{ item.attempts_used }}/{{ item.max_attempts }} attempts
+        {% if item.last_observed %} · last {{ item.last_observed }}{% endif %}
+        {% if item.pending_basename %} · pending {{ item.pending_basename }}{% endif %}
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endfor %}
+
+<h2>Pending queue</h2>
+{% if not pending %}
+  <section class="card"><em>No open pending files.</em></section>
+{% endif %}
+{% for p in pending %}
+<details class="card" id="pending/{{ p.filename }}">
+  <summary>{{ p.filename }} <span class="cap-meta">— {{ p.kind }} · {{ p.capability }}/{{ p.item_id }} · {{ p.status }}</span></summary>
+  <div><strong>ask:</strong> {{ p.ask }}</div>
+  {% if p.verdict_options %}
+    <div class="cap-meta">options: {{ p.verdict_options|join(', ') }}</div>
+  {% endif %}
+  <textarea class="resolution" placeholder="resolution: (edit and save)">{{ p.resolution_template }}</textarea>
+</details>
+{% endfor %}
+
+<h2>Recent ticks</h2>
+{% if not ticks %}
+  <section class="card"><em>No tick logs yet.</em></section>
+{% endif %}
+{% for t in ticks %}
+<article class="card tick" id="tick/{{ t.tick_id }}">
+  <div class="tick-header">{{ t.tick_id }} <span class="cap-meta">— {{ t.ran_at }}</span></div>
+  <ul>
+    {% for a in t.actions %}<li>{{ a }}</li>{% endfor %}
+  </ul>
+</article>
+{% endfor %}
+
+</main>
+<script>
+// Live reload via SSE — works only when served by i2e-serve. Fails silently for file://.
+(function() {
+  try {
+    var src = new EventSource('/events');
+    src.onmessage = function() { location.reload(); };
+    src.addEventListener('change', function() { location.reload(); });
+    src.onerror = function() { /* server unavailable; ignore */ };
+  } catch (e) { /* file:// scheme will SecurityError — silent */ }
+})();
+</script>
+</body>
+</html>

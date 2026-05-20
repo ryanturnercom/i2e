@@ -1,0 +1,25 @@
+capability: serve-cli-blocks
+last_run: 2026-05-20-51f7b4
+intent_version: 1
+items:
+  blocking-survives-launch:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-20T13:20:11.254835Z'
+    pending: null
+    raw: {}
+  stop-shuts-down-cleanly:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-20T13:20:12.112185Z'
+    pending: null
+    raw: {}
+  no-stale-url-after-shutdown:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-20T13:20:13.057759Z'
+    pending: null
+    raw: {}

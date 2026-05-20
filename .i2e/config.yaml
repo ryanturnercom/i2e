@@ -1,0 +1,23 @@
+# .i2e/config.yaml — effort tiers, defaults, advisory scheduler
+# This file is optional; the loader uses these same values as built-in defaults.
+
+effort_tiers:
+  case:
+    lazy:   { max_attempts: 0 }    # fails -> escalate to human, no auto-retry
+    low:    { max_attempts: 3 }
+    medium: { max_attempts: 6 }
+    high:   { max_attempts: 10 }
+  target:
+    lazy:   { max_attempts: 0 }
+    low:    { max_attempts: 1 }
+    medium: { max_attempts: 3 }
+    high:   { max_attempts: 5 }
+
+defaults:
+  case_effort: medium
+  target_effort: low
+  watcher: '@me'
+
+scheduler:                         # advisory only
+  cadence: weekly
+  via: claude-code-routine         # or windows-task-scheduler | launchd | cron | manual
