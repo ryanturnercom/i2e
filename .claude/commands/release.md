@@ -55,7 +55,15 @@ Parse `$ARGUMENTS`:
    Note: this is intentionally a single bundled commit. The release sweeps
    in whatever is dirty at the time it runs.
 
-7. Tag the commit: `git tag vNEW_VERSION`.
+7. Tag the commit with an annotated tag so `--follow-tags` will push it
+   alongside the commit in step 8:
+
+   ```
+   git tag -a vNEW_VERSION -m "vNEW_VERSION"
+   ```
+
+   (A lightweight tag — plain `git tag vNEW_VERSION` — is NOT pushed by
+   `--follow-tags` and would require a separate explicit push.)
 
 8. Push the commit and the tag in one step:
 

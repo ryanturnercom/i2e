@@ -1,0 +1,6 @@
+tick_id: 2026-05-20-860a98
+ran_at: '2026-05-20T17:21:29.687486Z'
+actions:
+- 'demoted: swarm-tick (active -> draft) for slicing'
+- 'i2e_spec.save_decomposition: swarm-tick -> 5 draft intents (atomic-worktree-claim,
+  runtime-frontmatter-mirror, batch-tick-planner, worktree-dispatch-and-merge, tick-log-sub-actions)'

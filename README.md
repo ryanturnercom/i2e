@@ -16,6 +16,10 @@ A small, agent-native SDLC: humans declare intent, an AI agent builds and proves
 
 - `i2e-provider-pytest` — cases and constraints via the test runner
 - `i2e-provider-human` — subjective acceptance for cases or targets
+- `i2e-provider-survey` — numeric-scale survey (NPS / Likert) targets
+- `i2e-provider-datadog` — metric-window targets via the Datadog API
+- `i2e-provider-ga` — GA4 Data API metric targets
+- `i2e-provider-sentry` — Sentry event-count cases or targets
 
 ## Quickstart
 
@@ -25,11 +29,17 @@ python -m venv .venv
 .venv\Scripts\python.exe -m pytest -q
 ```
 
-Run the test suite via `tasks.ps1`:
+Or via `tasks.ps1`:
 
 ```powershell
-./tasks.ps1 test
+./tasks.ps1 install     # create .venv + editable install with dev extras
+./tasks.ps1 test        # pytest -q (excludes the e2e marker)
+./tasks.ps1 cov         # coverage on src/i2e_core
+./tasks.ps1 e2e         # spec §10 worked example
+./tasks.ps1 all         # test + e2e
 ```
+
+A working downstream example lives at [`examples/url-shortener/`](examples/url-shortener/).
 
 ## Redistributable bundles
 
@@ -43,3 +53,10 @@ marketplace and as an [agentskills.io](https://agentskills.io)-format pack:
 See `dist/README.md` (after build) for the publishing flow. Source of truth
 remains `.claude/skills/` — re-run the bundle command after editing any
 `SKILL.md` or `provider.py`.
+
+## Releasing
+
+Use the `/release` slash command in Claude Code to bump the version in
+`pyproject.toml` (the single source of truth), rebuild bundles, commit,
+tag, and push to `origin/main`. Default bump is `patch`; pass `minor` or
+`major` to bump those components.

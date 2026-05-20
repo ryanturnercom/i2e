@@ -1,0 +1,11 @@
+capability: atomic-worktree-claim
+last_run: 2026-05-20-553b06
+intent_version: 1
+items:
+  atomic-worktree-claim-implemented:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-20T17:26:04.821938Z'
+    pending: null
+    raw: {}

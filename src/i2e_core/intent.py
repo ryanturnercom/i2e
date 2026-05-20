@@ -68,11 +68,36 @@ class Frontmatter(BaseModel):
     version: int
     status: Literal["draft", "active", "retired"]
     watcher: str = "@me"
+    depends_on: list[str] = Field(default_factory=list)
+    touches: list[str] = Field(default_factory=lambda: ["**"])
+    spec: str | None = None
+    spec_section: str | None = None
+    # Orchestrator-owned mirror of the active claim. See
+    # i2e_core.swarm.mirror_runtime / clear_runtime. Never written by
+    # i2e-intent; only the swarm dispatcher touches it.
+    runtime: dict | None = None
 
     @field_validator("capability")
     @classmethod
     def _cap_kebab(cls, v: str) -> str:
         return _validate_kebab(v)
+
+    @field_validator("depends_on")
+    @classmethod
+    def _deps_kebab(cls, v: list[str]) -> list[str]:
+        for slug in v:
+            _validate_kebab(slug)
+        return v
+
+    @field_validator("touches")
+    @classmethod
+    def _touches_non_empty(cls, v: list[str]) -> list[str]:
+        if not v:
+            return ["**"]
+        for g in v:
+            if not isinstance(g, str) or not g.strip():
+                raise ValueError(f"touches entry must be a non-empty string (got {g!r})")
+        return v
 
 
 class Capability(BaseModel):
@@ -190,6 +215,11 @@ _FRONTMATTER_KEY_ORDER = (
     "version",
     "status",
     "watcher",
+    "depends_on",
+    "touches",
+    "spec",
+    "spec_section",
+    "runtime",
 )
 
 
@@ -232,6 +262,12 @@ def _dump_item(item: dict[str, Any]) -> str:
 def serialize_intent(cap: Capability) -> str:
     """Render a Capability as canonical Markdown with YAML frontmatter."""
     fm_data = cap.frontmatter.model_dump(mode="json")
+    if not fm_data.get("depends_on"):
+        fm_data.pop("depends_on", None)
+    # touches defaults to ["**"] (every path). Omit when the value matches
+    # the default so files without an explicit touches: stay clean.
+    if fm_data.get("touches") == ["**"]:
+        fm_data.pop("touches", None)
     fm_data = _ordered(fm_data, _FRONTMATTER_KEY_ORDER)
     fm_yaml = yaml.safe_dump(
         fm_data, sort_keys=False, default_flow_style=False, allow_unicode=True

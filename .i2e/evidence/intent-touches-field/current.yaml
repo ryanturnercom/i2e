@@ -1,0 +1,46 @@
+capability: intent-touches-field
+last_run: 2026-05-20-57d9db
+intent_version: 1
+items:
+  touches-round-trips:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-20T16:47:02.420757Z'
+    pending: null
+    raw: {}
+  overlap-helper-detects-glob-intersection:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-20T16:47:02.750537Z'
+    pending: null
+    raw: {}
+  develop-write-outside-touches-fails:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-20T16:47:03.081282Z'
+    pending: null
+    raw: {}
+  missing-touches-defaults-to-global:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-20T16:47:03.434597Z'
+    pending: null
+    raw: {}
+  spec-mentions-touches:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-20T16:47:03.771309Z'
+    pending: null
+    raw: {}
+  no-touches-behaves-as-today:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-20T16:47:04.115073Z'
+    pending: null
+    raw: {}

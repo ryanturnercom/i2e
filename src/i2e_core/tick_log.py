@@ -36,13 +36,22 @@ _TICK_GLOB = "*-tick.yaml"
 
 
 class TickLog(BaseModel):
-    """One orchestrator tick that performed at least one action."""
+    """One orchestrator tick that performed at least one action.
+
+    ``sub_actions`` is the swarm-tick extension: when a tick dispatches a
+    parallel batch of N capabilities, ``actions`` holds the batch-level
+    summary lines (one entry per slug, still greppable by the existing
+    helpers) and ``sub_actions`` carries one structured nested action
+    list per slug, in batch order. Legacy ticks omit it entirely and
+    keep working.
+    """
 
     model_config = ConfigDict(extra="forbid")
 
     tick_id: str
     ran_at: datetime
     actions: list[str] = Field(default_factory=list)
+    sub_actions: list[list[str]] | None = None
 
 
 def _tick_path(root: Path, tick_id: str) -> Path:
@@ -62,7 +71,9 @@ def write_tick(root: Path, tick: TickLog) -> Path | None:
     p = _tick_path(root, tick.tick_id)
     if p.exists():
         raise FileExistsError(f"Tick log already exists: {p}")
-    payload = tick.model_dump(mode="json")
+    # Drop ``sub_actions`` from the wire form when it's None so legacy
+    # tick logs stay byte-identical to pre-swarm output.
+    payload = tick.model_dump(mode="json", exclude_none=True)
     p.parent.mkdir(parents=True, exist_ok=True)
     atomic_write(p, dump_yaml(payload))
     return p

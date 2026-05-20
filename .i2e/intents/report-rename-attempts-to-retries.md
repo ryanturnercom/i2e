@@ -3,8 +3,11 @@ capability: report-rename-attempts-to-retries
 created: '2026-05-20'
 updated: '2026-05-20'
 version: 1
-status: draft
+status: active
 watcher: '@ryan'
+touches:
+  - 'src/i2e_core/report/**'
+  - 'tests/test_report_retries_label.py'
 ---
 
 # Report label: rename "attempts" → "retries"

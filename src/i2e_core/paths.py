@@ -53,6 +53,10 @@ def context_dir(root: Path) -> Path:
     return i2e_dir(root) / "context"
 
 
+def specs_dir(root: Path) -> Path:
+    return i2e_dir(root) / "specs"
+
+
 def config_path(root: Path) -> Path:
     return i2e_dir(root) / "config.yaml"
 

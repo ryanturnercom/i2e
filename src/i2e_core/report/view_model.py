@@ -284,19 +284,17 @@ def _list_recent_ticks(root: Path, n: int = 10) -> list[tuple[Path, TickLog]]:
     base = logs_dir(Path(root))
     if not base.exists():
         return []
-    candidates = sorted(
-        (p for p in base.glob("*-tick.yaml") if p.is_file()),
-        key=lambda p: p.name,
-        reverse=True,
-    )
-    out: list[tuple[Path, TickLog]] = []
-    for p in candidates:
+    parsed: list[tuple[Path, TickLog]] = []
+    for p in base.glob("*-tick.yaml"):
+        if not p.is_file():
+            continue
         tl = _read_tick(p)
         if tl is not None:
-            out.append((p, tl))
-        if len(out) >= n:
-            break
-    return out
+            parsed.append((p, tl))
+    # Reverse chronological by ran_at. Filename sort is unreliable within a day
+    # because the run-id hex suffix is random. Tiebreak by filename for stability.
+    parsed.sort(key=lambda pair: (pair[1].ran_at, pair[0].name), reverse=True)
+    return parsed[:n]
 
 
 def _build_tick_view(tl: TickLog) -> TickView:
@@ -386,14 +384,9 @@ def _jinja_env() -> jinja2.Environment:
     )
 
 
-def render_to_string(root: Path) -> str:
-    """Build the view model and render the HTML to a string.
-
-    Pure function over disk state — does not touch ``.i2e/report.html``.
-    """
-    vm = build_view_model(Path(root))
+def _render_template(template_name: str, vm: ReportViewModel) -> str:
     env = _jinja_env()
-    tpl = env.get_template("report.html.j2")
+    tpl = env.get_template(template_name)
     # Pass the Pydantic models directly so Jinja can use attribute access
     # cleanly (a dict's ``items`` method would otherwise shadow ``cap.items``).
     return tpl.render(
@@ -408,6 +401,24 @@ def render_to_string(root: Path) -> str:
         ticks=vm.ticks,
         serve_url=vm.serve_url,
     )
+
+
+def render_to_string(root: Path) -> str:
+    """Build the view model and render the HTML to a string.
+
+    Pure function over disk state — does not touch ``.i2e/report.html``.
+    """
+    return _render_template("report.html.j2", build_view_model(Path(root)))
+
+
+def render_main_to_string(root: Path) -> str:
+    """Render only the dynamic ``<main>`` body — used by ``i2e-serve`` AJAX updates.
+
+    Returns the fragment that lives inside ``<main>...</main>``. The client
+    swaps this into the live page on SSE ``change`` events to preserve scroll
+    position and any open ``<details>`` / ``<textarea>`` input state.
+    """
+    return _render_template("report_main.html.j2", build_view_model(Path(root)))
 
 
 def render(root: Path) -> Path:
@@ -427,5 +438,6 @@ __all__ = [
     "TickView",
     "build_view_model",
     "render",
+    "render_main_to_string",
     "render_to_string",
 ]

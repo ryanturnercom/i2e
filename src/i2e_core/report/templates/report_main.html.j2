@@ -1,0 +1,83 @@
+
+<h2>Capabilities</h2>
+{% if not capabilities %}
+  <section class="card"><em>No active capabilities yet.</em></section>
+{% endif %}
+{% for cap in capabilities %}
+<section class="card" id="cap/{{ cap.slug }}">
+  <h3>{{ cap.slug }} <span class="cap-meta">— v{{ cap.version }} · {{ cap.status }} · watcher {{ cap.watcher }}</span></h3>
+  <div class="summary-line">
+    {% for verdict, count in cap.summary_sorted %}{{ verdict }}: {{ count }}{% if not loop.last %} · {% endif %}{% endfor %}
+  </div>
+  <div class="item-grid">
+    {% for item in cap.items %}
+    <div class="item" id="item/{{ cap.slug }}/{{ item.id }}">
+      <span class="id">{{ item.id }}</span>
+      <span class="type">{{ item.type }}{% if item.provider %} · {{ item.provider }}{% endif %}</span>
+      <span class="pill {{ item.verdict_class }}">{{ item.verdict_label }}</span>
+      {% if item.value is not none %}<span class="value">{{ item.value }}</span>{% endif %}
+      <span class="meta">
+        {{ item.attempts_used }}/{{ item.max_attempts }} retries
+        {% if item.last_observed %} · last {{ item.last_observed }}{% endif %}
+        {% if item.pending_basename %} · pending {{ item.pending_basename }}{% endif %}
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endfor %}
+
+{% if drafts %}
+<h2 class="drafts-heading">Drafts</h2>
+{% for cap in drafts %}
+<section class="card draft" id="draft/{{ cap.slug }}">
+  <h3>{{ cap.slug }} <span class="cap-meta">— v{{ cap.version }} · {{ cap.status }} · watcher {{ cap.watcher }}</span></h3>
+  <div class="summary-line">
+    {% for verdict, count in cap.summary_sorted %}{{ verdict }}: {{ count }}{% if not loop.last %} · {% endif %}{% endfor %}
+  </div>
+  <div class="item-grid">
+    {% for item in cap.items %}
+    <div class="item" id="draft-item/{{ cap.slug }}/{{ item.id }}">
+      <span class="id">{{ item.id }}</span>
+      <span class="type">{{ item.type }}{% if item.provider %} · {{ item.provider }}{% endif %}</span>
+      <span class="pill {{ item.verdict_class }}">{{ item.verdict_label }}</span>
+      {% if item.value is not none %}<span class="value">{{ item.value }}</span>{% endif %}
+      <span class="meta">
+        {{ item.attempts_used }}/{{ item.max_attempts }} retries
+        {% if item.last_observed %} · last {{ item.last_observed }}{% endif %}
+        {% if item.pending_basename %} · pending {{ item.pending_basename }}{% endif %}
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endfor %}
+{% endif %}
+
+<h2>Pending queue</h2>
+{% if not pending %}
+  <section class="card"><em>No open pending files.</em></section>
+{% endif %}
+{% for p in pending %}
+<details class="card" id="pending/{{ p.filename }}">
+  <summary>{{ p.filename }} <span class="cap-meta">— {{ p.kind }} · {{ p.capability }}/{{ p.item_id }} · {{ p.status }}</span></summary>
+  <div><strong>ask:</strong> {{ p.ask }}</div>
+  {% if p.verdict_options %}
+    <div class="cap-meta">options: {{ p.verdict_options|join(', ') }}</div>
+  {% endif %}
+  <textarea class="resolution" placeholder="resolution: (edit and save)">{{ p.resolution_template }}</textarea>
+</details>
+{% endfor %}
+
+<h2>Recent ticks</h2>
+{% if not ticks %}
+  <section class="card"><em>No tick logs yet.</em></section>
+{% endif %}
+{% for t in ticks %}
+<article class="card tick" id="tick/{{ t.tick_id }}">
+  <div class="tick-header">{{ t.tick_id }} <span class="cap-meta">— {{ t.ran_at }}</span></div>
+  <ul>
+    {% for a in t.actions %}<li>{{ a }}</li>{% endfor %}
+  </ul>
+</article>
+{% endfor %}

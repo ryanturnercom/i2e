@@ -54,6 +54,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from . import adapt, evidence_runner
 from .config import load_config
+from .deps import build_graph, find_cycle, find_unknown_refs, ready_slugs
 from .develop import scoped_capabilities
 from .evidence import read_current
 from .intent import parse_intent
@@ -222,6 +223,26 @@ def preflight(root: Path) -> PreflightResult:
         except ValidationError as ve:
             errors.setdefault(cap.frontmatter.capability, []).extend(ve.errors)
 
+    # depends_on graph: unknown refs first (so a cycle through a missing node
+    # is reported as "unknown ref" rather than masquerading as a cycle).
+    graph = build_graph(root)
+    for slug, missing in find_unknown_refs(graph):
+        errors.setdefault(slug, []).append(
+            f"depends_on references unknown capability {missing!r}"
+        )
+    if not any(
+        "depends_on references unknown" in m
+        for errs in errors.values()
+        for m in errs
+    ):
+        cycle = find_cycle(graph)
+        if cycle is not None:
+            chain = " -> ".join(cycle)
+            for slug in {s for s in cycle}:
+                errors.setdefault(slug, []).append(
+                    f"depends_on cycle: {chain}"
+                )
+
     if errors:
         _invalidate_preflight_cache(root)
     else:
@@ -352,12 +373,20 @@ def decide(root: Path) -> Action:
         return ApplyResolutions()
 
     # Branch 2: an active capability needs develop (new or version-bumped).
+    # depends_on respects ordering: a child never fires while a parent still
+    # needs develop. Among the ready set, alphabetical breaks ties (spec §6.1).
     scoped = scoped_capabilities(root)
     if scoped:
-        scoped_sorted = sorted(
-            (c.frontmatter.capability for c in scoped)
-        )
-        return DevelopAndEvidence(capability=scoped_sorted[0])
+        scoped_slugs = {c.frontmatter.capability for c in scoped}
+        graph = build_graph(root)
+        ready = ready_slugs(graph, scoped_slugs)
+        # ready is always non-empty when scoped is non-empty: preflight rejects
+        # cycles, so the DAG over scoped has at least one source.
+        if ready:
+            return DevelopAndEvidence(capability=sorted(ready)[0])
+        # Defensive fallback: preflight should have caught any cycle, but if
+        # one slips through, falling back to alphabetical keeps the loop alive.
+        return DevelopAndEvidence(capability=sorted(scoped_slugs)[0])
 
     # Branch 3: a capability has retry-eligible items.
     for cap_slug in active:

@@ -27,7 +27,7 @@ from watchdog.observers import Observer
 
 from .io_utils import atomic_write
 from .paths import i2e_dir, serve_url_path
-from .report import render
+from .report import render, render_main_to_string
 
 
 # ---------- Internal helpers ----------
@@ -101,6 +101,16 @@ class _ChangeBroker:
             self._subs.clear()
 
 
+_SELF_WRITTEN_NAMES = frozenset(
+    {
+        ".serve.url",
+        "report.html",
+        "report.html.tmp",
+        ".preflight_cache.json",
+    }
+)
+
+
 class _WatchdogHandler(FileSystemEventHandler):
     def __init__(self, broker: _ChangeBroker, root_dir: Path) -> None:
         self._broker = broker
@@ -109,9 +119,15 @@ class _WatchdogHandler(FileSystemEventHandler):
         self._url_file = serve_url_path(root_dir.parent)
 
     def _emit(self, src_path: str) -> None:
+        # Self-written files at the .i2e/ root must not feed back into the
+        # broker — every GET / re-renders report.html, which would otherwise
+        # trigger a change SSE event, which would trigger location.reload()
+        # in the browser, which would trigger another GET /, ad infinitum.
+        # Keep this check tight (file name only, no extra stat calls) so the
+        # event handler stays cheap.
         try:
             p = Path(src_path)
-            if p.name == self._url_file.name:
+            if p.name in _SELF_WRITTEN_NAMES:
                 return
         except Exception:
             pass
@@ -154,6 +170,8 @@ def _make_handler_class(
             path = urlparse(self.path).path
             if path == "/" or path == "/index.html":
                 self._serve_index()
+            elif path == "/partial":
+                self._serve_partial()
             elif path == "/events":
                 self._serve_events()
             else:
@@ -176,6 +194,24 @@ def _make_handler_class(
             try:
                 report_file = render(root)
                 html = Path(report_file).read_text(encoding="utf-8")
+            except Exception as e:
+                self._write_text(
+                    HTTPStatus.INTERNAL_SERVER_ERROR,
+                    f"render failed: {e}",
+                    "text/plain",
+                )
+                return
+            self._write_text(HTTPStatus.OK, html, "text/html; charset=utf-8")
+
+        def _serve_partial(self) -> None:
+            """Render just the dynamic ``<main>`` body for AJAX swap-in updates.
+
+            The client listens to SSE ``change`` events and replaces
+            ``document.querySelector('main').innerHTML`` with this response,
+            which preserves scroll position and any in-page interaction state.
+            """
+            try:
+                html = render_main_to_string(root)
             except Exception as e:
                 self._write_text(
                     HTTPStatus.INTERNAL_SERVER_ERROR,

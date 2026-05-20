@@ -1,0 +1,46 @@
+capability: develop-parallel-fanout
+last_run: 2026-05-20-b5829b
+intent_version: 1
+items:
+  develop-plans-parallel-batch-on-independent-files:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-20T17:01:26.327283Z'
+    pending: null
+    raw: {}
+  develop-serializes-shared-files:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-20T17:01:26.651704Z'
+    pending: null
+    raw: {}
+  develop-aggregates-outputs:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-20T17:01:27.365282Z'
+    pending: null
+    raw: {}
+  develop-respects-touches-globs:
+    verdict: pass
+    value: null
+    attempts_used: 1
+    last_observed: '2026-05-20T17:01:27.712299Z'
+    pending: null
+    raw: {}
+  spec-mentions-develop-fanout:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-20T17:01:28.043814Z'
+    pending: null
+    raw: {}
+  single-file-capability-still-serial:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-20T17:01:28.397700Z'
+    pending: null
+    raw: {}

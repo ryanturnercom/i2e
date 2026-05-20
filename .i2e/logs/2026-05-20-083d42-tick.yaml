@@ -1,0 +1,6 @@
+tick_id: 2026-05-20-083d42
+ran_at: '2026-05-20T17:31:43.105639Z'
+actions:
+- 'ran_develop: worktree-dispatch-and-merge (dispatch_batch via ThreadPoolExecutor;
+  real git worktree integration deferred)'
+- 'ran_evidence: worktree-dispatch-and-merge (pass=1 total=1)'

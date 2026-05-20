@@ -1,0 +1,5 @@
+tick_id: 2026-05-20-d29749
+ran_at: '2026-05-20T17:09:38.536021Z'
+actions:
+- 'ran_develop: i2e-spec-skill (decompose + reconcile + spec/spec_section frontmatter)'
+- 'ran_evidence: i2e-spec-skill (pass=9 total=9)'

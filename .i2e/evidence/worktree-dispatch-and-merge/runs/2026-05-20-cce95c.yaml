@@ -1,0 +1,12 @@
+run_id: 2026-05-20-cce95c
+capability: worktree-dispatch-and-merge
+intent_version: 1
+collected_at: '2026-05-20T17:31:34.712413Z'
+items:
+  worktree-dispatch-and-merge-implemented:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-20T17:31:34.712413Z'
+    pending: null
+    raw: {}

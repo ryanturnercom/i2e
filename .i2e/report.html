@@ -146,6 +146,26 @@
   article.tick { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
   article.tick .tick-header { font-weight: 600; margin-bottom: 4px; }
   article.tick ul { margin: 4px 0 0 18px; padding: 0; }
+  /* Live-update indicator (i2e-serve only) */
+  .live-stamp {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: var(--pill-awaiting-bg);
+    color: var(--pill-awaiting-fg);
+    font-size: 11px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    opacity: 0;
+    transition: opacity 0.2s ease-out;
+  }
+  .live-stamp.visible { opacity: 1; }
+  .live-stamp.flash { background: var(--pill-pass-bg); color: var(--pill-pass-fg); }
+  @keyframes mainPulse {
+    0%   { box-shadow: inset 0 0 0 2px var(--pill-pass-fg); }
+    100% { box-shadow: inset 0 0 0 2px transparent; }
+  }
+  main.refreshed { animation: mainPulse 0.6s ease-out; }
   @media (max-width: 600px) {
     main { padding: 12px; }
     header.banner { padding: 12px; }
@@ -157,7 +177,8 @@
   <div>
     <h1>intent-based_simplified <span class="banner-meta">— i2e report</span></h1>
     <div class="banner-meta">
-      Generated at 2026-05-20 15:56:49Z · last tick 2026-05-20-9b0619
+      Generated at 2026-05-20 17:32:55Z · last tick 2026-05-20-ce3431
+      <span id="live-stamp" class="live-stamp" title="Live update received from i2e-serve"></span>
     </div>
   </div>
   <div>
@@ -165,14 +186,139 @@
       <span class="shippable green">Shippable</span>
     
     <div class="served-by">
-      Served via http://127.0.0.1:63182/
+      Served via http://127.0.0.1:54455/
     </div>
   </div>
 </header>
 <main>
-
 <h2>Capabilities</h2>
 
+
+<section class="card" id="cap/atomic-worktree-claim">
+  <h3>atomic-worktree-claim <span class="cap-meta">— v1 · active · watcher @me</span></h3>
+  <div class="summary-line">
+    pass: 1
+  </div>
+  <div class="item-grid">
+    
+    <div class="item" id="item/atomic-worktree-claim/atomic-worktree-claim-implemented">
+      <span class="id">atomic-worktree-claim-implemented</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/6 retries
+         · last 2026-05-20 17:26:04Z
+        
+      </span>
+    </div>
+    
+  </div>
+</section>
+
+<section class="card" id="cap/batch-tick-planner">
+  <h3>batch-tick-planner <span class="cap-meta">— v1 · active · watcher @me</span></h3>
+  <div class="summary-line">
+    pass: 1
+  </div>
+  <div class="item-grid">
+    
+    <div class="item" id="item/batch-tick-planner/batch-tick-planner-implemented">
+      <span class="id">batch-tick-planner-implemented</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/6 retries
+         · last 2026-05-20 17:30:01Z
+        
+      </span>
+    </div>
+    
+  </div>
+</section>
+
+<section class="card" id="cap/develop-parallel-fanout">
+  <h3>develop-parallel-fanout <span class="cap-meta">— v1 · active · watcher @ryan</span></h3>
+  <div class="summary-line">
+    pass: 6
+  </div>
+  <div class="item-grid">
+    
+    <div class="item" id="item/develop-parallel-fanout/develop-aggregates-outputs">
+      <span class="id">develop-aggregates-outputs</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/6 retries
+         · last 2026-05-20 17:01:27Z
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/develop-parallel-fanout/develop-plans-parallel-batch-on-independent-files">
+      <span class="id">develop-plans-parallel-batch-on-independent-files</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/10 retries
+         · last 2026-05-20 17:01:26Z
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/develop-parallel-fanout/develop-respects-touches-globs">
+      <span class="id">develop-respects-touches-globs</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        1/6 retries
+         · last 2026-05-20 17:01:27Z
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/develop-parallel-fanout/develop-serializes-shared-files">
+      <span class="id">develop-serializes-shared-files</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/6 retries
+         · last 2026-05-20 17:01:26Z
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/develop-parallel-fanout/single-file-capability-still-serial">
+      <span class="id">single-file-capability-still-serial</span>
+      <span class="type">constraint · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/3 retries
+         · last 2026-05-20 17:01:28Z
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/develop-parallel-fanout/spec-mentions-develop-fanout">
+      <span class="id">spec-mentions-develop-fanout</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/3 retries
+         · last 2026-05-20 17:01:28Z
+        
+      </span>
+    </div>
+    
+  </div>
+</section>
 
 <section class="card" id="cap/fast-tick-noop">
   <h3>fast-tick-noop <span class="cap-meta">— v2 · active · watcher @ryan</span></h3>
@@ -187,7 +333,7 @@
       <span class="pill pass">pass</span>
       
       <span class="meta">
-        0/6 attempts
+        0/6 retries
          · last 2026-05-20 15:56:27Z
         
       </span>
@@ -199,7 +345,7 @@
       <span class="pill pass">pass</span>
       
       <span class="meta">
-        0/6 attempts
+        0/6 retries
          · last 2026-05-20 15:56:27Z
         
       </span>
@@ -211,7 +357,7 @@
       <span class="pill pass">pass</span>
       
       <span class="meta">
-        0/6 attempts
+        0/6 retries
          · last 2026-05-20 15:56:26Z
         
       </span>
@@ -223,7 +369,7 @@
       <span class="pill pass">pass</span>
       
       <span class="meta">
-        0/3 attempts
+        0/3 retries
          · last 2026-05-20 15:56:26Z
         
       </span>
@@ -235,8 +381,336 @@
       <span class="pill pass">pass</span>
       
       <span class="meta">
-        0/3 attempts
+        0/3 retries
          · last 2026-05-20 15:56:27Z
+        
+      </span>
+    </div>
+    
+  </div>
+</section>
+
+<section class="card" id="cap/i2e-spec-skill">
+  <h3>i2e-spec-skill <span class="cap-meta">— v1 · active · watcher @ryan</span></h3>
+  <div class="summary-line">
+    pass: 9
+  </div>
+  <div class="item-grid">
+    
+    <div class="item" id="item/i2e-spec-skill/decomposed-fills-depends-on">
+      <span class="id">decomposed-fills-depends-on</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/6 retries
+         · last 2026-05-20 17:09:29Z
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/i2e-spec-skill/decomposed-intents-link-back">
+      <span class="id">decomposed-intents-link-back</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/6 retries
+         · last 2026-05-20 17:09:28Z
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/i2e-spec-skill/existing-i2e-intent-unchanged">
+      <span class="id">existing-i2e-intent-unchanged</span>
+      <span class="type">constraint · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/3 retries
+         · last 2026-05-20 17:09:30Z
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/i2e-spec-skill/intents-land-as-draft">
+      <span class="id">intents-land-as-draft</span>
+      <span class="type">constraint · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/3 retries
+         · last 2026-05-20 17:09:30Z
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/i2e-spec-skill/reconcile-detects-add-and-retire">
+      <span class="id">reconcile-detects-add-and-retire</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/6 retries
+         · last 2026-05-20 17:09:29Z
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/i2e-spec-skill/reconcile-detects-edit">
+      <span class="id">reconcile-detects-edit</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/6 retries
+         · last 2026-05-20 17:09:28Z
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/i2e-spec-skill/spec-mentions-i2e-spec-skill">
+      <span class="id">spec-mentions-i2e-spec-skill</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/3 retries
+         · last 2026-05-20 17:09:29Z
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/i2e-spec-skill/spec-preserved-on-disk">
+      <span class="id">spec-preserved-on-disk</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/3 retries
+         · last 2026-05-20 17:09:28Z
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/i2e-spec-skill/spec-to-intents-decomposes">
+      <span class="id">spec-to-intents-decomposes</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/10 retries
+         · last 2026-05-20 17:09:27Z
+        
+      </span>
+    </div>
+    
+  </div>
+</section>
+
+<section class="card" id="cap/intent-depends-on-field">
+  <h3>intent-depends-on-field <span class="cap-meta">— v1 · active · watcher @ryan</span></h3>
+  <div class="summary-line">
+    pass: 6
+  </div>
+  <div class="item-grid">
+    
+    <div class="item" id="item/intent-depends-on-field/cycle-rejected-by-preflight">
+      <span class="id">cycle-rejected-by-preflight</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/6 retries
+         · last 2026-05-20 16:40:43Z
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/intent-depends-on-field/decide-respects-dep-order">
+      <span class="id">decide-respects-dep-order</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/6 retries
+         · last 2026-05-20 16:40:42Z
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/intent-depends-on-field/depends-on-round-trips">
+      <span class="id">depends-on-round-trips</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/3 retries
+         · last 2026-05-20 16:40:42Z
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/intent-depends-on-field/no-depends-on-behaves-as-today">
+      <span class="id">no-depends-on-behaves-as-today</span>
+      <span class="type">constraint · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/3 retries
+         · last 2026-05-20 16:40:44Z
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/intent-depends-on-field/spec-mentions-depends-on">
+      <span class="id">spec-mentions-depends-on</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/3 retries
+         · last 2026-05-20 16:40:43Z
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/intent-depends-on-field/unknown-dep-rejected">
+      <span class="id">unknown-dep-rejected</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/6 retries
+         · last 2026-05-20 16:40:43Z
+        
+      </span>
+    </div>
+    
+  </div>
+</section>
+
+<section class="card" id="cap/intent-touches-field">
+  <h3>intent-touches-field <span class="cap-meta">— v1 · active · watcher @ryan</span></h3>
+  <div class="summary-line">
+    pass: 6
+  </div>
+  <div class="item-grid">
+    
+    <div class="item" id="item/intent-touches-field/develop-write-outside-touches-fails">
+      <span class="id">develop-write-outside-touches-fails</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/6 retries
+         · last 2026-05-20 16:47:03Z
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/intent-touches-field/missing-touches-defaults-to-global">
+      <span class="id">missing-touches-defaults-to-global</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/3 retries
+         · last 2026-05-20 16:47:03Z
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/intent-touches-field/no-touches-behaves-as-today">
+      <span class="id">no-touches-behaves-as-today</span>
+      <span class="type">constraint · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/3 retries
+         · last 2026-05-20 16:47:04Z
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/intent-touches-field/overlap-helper-detects-glob-intersection">
+      <span class="id">overlap-helper-detects-glob-intersection</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/6 retries
+         · last 2026-05-20 16:47:02Z
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/intent-touches-field/spec-mentions-touches">
+      <span class="id">spec-mentions-touches</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/3 retries
+         · last 2026-05-20 16:47:03Z
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/intent-touches-field/touches-round-trips">
+      <span class="id">touches-round-trips</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/3 retries
+         · last 2026-05-20 16:47:02Z
+        
+      </span>
+    </div>
+    
+  </div>
+</section>
+
+<section class="card" id="cap/report-rename-attempts-to-retries">
+  <h3>report-rename-attempts-to-retries <span class="cap-meta">— v1 · active · watcher @ryan</span></h3>
+  <div class="summary-line">
+    pass: 3
+  </div>
+  <div class="item-grid">
+    
+    <div class="item" id="item/report-rename-attempts-to-retries/current-yaml-field-unchanged">
+      <span class="id">current-yaml-field-unchanged</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/3 retries
+         · last 2026-05-20 17:13:23Z
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/report-rename-attempts-to-retries/report-renders-without-error">
+      <span class="id">report-renders-without-error</span>
+      <span class="type">constraint · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/3 retries
+         · last 2026-05-20 17:13:23Z
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/report-rename-attempts-to-retries/report-shows-retries-label">
+      <span class="id">report-shows-retries-label</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/3 retries
+         · last 2026-05-20 17:13:22Z
         
       </span>
     </div>
@@ -257,7 +731,7 @@
       <span class="pill pass">pass</span>
       
       <span class="meta">
-        0/3 attempts
+        0/3 retries
          · last 2026-05-20 15:38:31Z
         
       </span>
@@ -269,7 +743,7 @@
       <span class="pill pass">pass</span>
       
       <span class="meta">
-        0/6 attempts
+        0/6 retries
          · last 2026-05-20 15:38:30Z
         
       </span>
@@ -281,7 +755,7 @@
       <span class="pill pass">pass</span>
       
       <span class="meta">
-        0/6 attempts
+        0/6 retries
          · last 2026-05-20 15:38:31Z
         
       </span>
@@ -293,7 +767,7 @@
       <span class="pill pass">pass</span>
       
       <span class="meta">
-        0/3 attempts
+        0/3 retries
          · last 2026-05-20 15:38:31Z
         
       </span>
@@ -305,8 +779,30 @@
       <span class="pill pass">pass</span>
       
       <span class="meta">
-        0/3 attempts
+        0/3 retries
          · last 2026-05-20 15:38:32Z
+        
+      </span>
+    </div>
+    
+  </div>
+</section>
+
+<section class="card" id="cap/runtime-frontmatter-mirror">
+  <h3>runtime-frontmatter-mirror <span class="cap-meta">— v1 · active · watcher @me</span></h3>
+  <div class="summary-line">
+    pass: 1
+  </div>
+  <div class="item-grid">
+    
+    <div class="item" id="item/runtime-frontmatter-mirror/runtime-frontmatter-mirror-implemented">
+      <span class="id">runtime-frontmatter-mirror-implemented</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/6 retries
+         · last 2026-05-20 17:28:34Z
         
       </span>
     </div>
@@ -327,7 +823,7 @@
       <span class="pill pass">pass</span>
       
       <span class="meta">
-        0/6 attempts
+        0/6 retries
          · last 2026-05-20 13:20:11Z
         
       </span>
@@ -339,7 +835,7 @@
       <span class="pill pass">pass</span>
       
       <span class="meta">
-        0/3 attempts
+        0/3 retries
          · last 2026-05-20 13:20:13Z
         
       </span>
@@ -351,7 +847,7 @@
       <span class="pill pass">pass</span>
       
       <span class="meta">
-        0/6 attempts
+        0/6 retries
          · last 2026-05-20 13:20:12Z
         
       </span>
@@ -360,6 +856,645 @@
   </div>
 </section>
 
+<section class="card" id="cap/serve-no-self-refresh-loop">
+  <h3>serve-no-self-refresh-loop <span class="cap-meta">— v1 · active · watcher @ryan</span></h3>
+  <div class="summary-line">
+    pass: 4
+  </div>
+  <div class="item-grid">
+    
+    <div class="item" id="item/serve-no-self-refresh-loop/intent-write-emits-change">
+      <span class="id">intent-write-emits-change</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/6 retries
+         · last 2026-05-20 17:16:49Z
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/serve-no-self-refresh-loop/ready-and-debounce-unchanged">
+      <span class="id">ready-and-debounce-unchanged</span>
+      <span class="type">constraint · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/3 retries
+         · last 2026-05-20 17:16:51Z
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/serve-no-self-refresh-loop/render-write-emits-no-change">
+      <span class="id">render-write-emits-no-change</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/6 retries
+         · last 2026-05-20 17:16:51Z
+        
+      </span>
+    </div>
+    
+    <div class="item" id="item/serve-no-self-refresh-loop/single-get-emits-no-change">
+      <span class="id">single-get-emits-no-change</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/6 retries
+         · last 2026-05-20 17:16:48Z
+        
+      </span>
+    </div>
+    
+  </div>
+</section>
+
+<section class="card" id="cap/tick-log-sub-actions">
+  <h3>tick-log-sub-actions <span class="cap-meta">— v1 · active · watcher @me</span></h3>
+  <div class="summary-line">
+    pass: 1
+  </div>
+  <div class="item-grid">
+    
+    <div class="item" id="item/tick-log-sub-actions/tick-log-sub-actions-implemented">
+      <span class="id">tick-log-sub-actions-implemented</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/6 retries
+         · last 2026-05-20 17:32:47Z
+        
+      </span>
+    </div>
+    
+  </div>
+</section>
+
+<section class="card" id="cap/worktree-dispatch-and-merge">
+  <h3>worktree-dispatch-and-merge <span class="cap-meta">— v1 · active · watcher @me</span></h3>
+  <div class="summary-line">
+    pass: 1
+  </div>
+  <div class="item-grid">
+    
+    <div class="item" id="item/worktree-dispatch-and-merge/worktree-dispatch-and-merge-implemented">
+      <span class="id">worktree-dispatch-and-merge-implemented</span>
+      <span class="type">case · pytest</span>
+      <span class="pill pass">pass</span>
+      
+      <span class="meta">
+        0/6 retries
+         · last 2026-05-20 17:31:34Z
+        
+      </span>
+    </div>
+    
+  </div>
+</section>
+
+
+
+<h2 class="drafts-heading">Drafts</h2>
+
+<section class="card draft" id="draft/i2e-regression">
+  <h3>i2e-regression <span class="cap-meta">— v1 · draft · watcher @ryan</span></h3>
+  <div class="summary-line">
+    none: 9
+  </div>
+  <div class="item-grid">
+    
+    <div class="item" id="draft-item/i2e-regression/regression-demotes-on-case-failure">
+      <span class="id">regression-demotes-on-case-failure</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/6 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/i2e-regression/regression-does-not-modify-draft-or-retired">
+      <span class="id">regression-does-not-modify-draft-or-retired</span>
+      <span class="type">constraint · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/3 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/i2e-regression/regression-does-not-touch-targets">
+      <span class="id">regression-does-not-touch-targets</span>
+      <span class="type">constraint · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/3 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/i2e-regression/regression-respects-capability-flag">
+      <span class="id">regression-respects-capability-flag</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/6 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/i2e-regression/regression-respects-status-flag">
+      <span class="id">regression-respects-status-flag</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/6 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/i2e-regression/regression-runs-all-cases-for-shipped">
+      <span class="id">regression-runs-all-cases-for-shipped</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/6 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/i2e-regression/regression-skips-targets">
+      <span class="id">regression-skips-targets</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/6 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/i2e-regression/regression-writes-log-entry">
+      <span class="id">regression-writes-log-entry</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/3 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/i2e-regression/spec-mentions-i2e-regression">
+      <span class="id">spec-mentions-i2e-regression</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/3 retries
+        
+        
+      </span>
+    </div>
+    
+  </div>
+</section>
+
+<section class="card draft" id="draft/intent-shipped-status">
+  <h3>intent-shipped-status <span class="cap-meta">— v1 · draft · watcher @ryan</span></h3>
+  <div class="summary-line">
+    none: 11
+  </div>
+  <div class="item-grid">
+    
+    <div class="item" id="draft-item/intent-shipped-status/auto-promotes-when-all-green">
+      <span class="id">auto-promotes-when-all-green</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/6 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/intent-shipped-status/does-not-promote-with-failing-verdict">
+      <span class="id">does-not-promote-with-failing-verdict</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/6 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/intent-shipped-status/existing-three-states-unchanged">
+      <span class="id">existing-three-states-unchanged</span>
+      <span class="type">constraint · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/3 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/intent-shipped-status/manual-demotion-via-intent-skill">
+      <span class="id">manual-demotion-via-intent-skill</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/6 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/intent-shipped-status/orchestrator-only-writes-status-on-promote-demote">
+      <span class="id">orchestrator-only-writes-status-on-promote-demote</span>
+      <span class="type">constraint · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/3 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/intent-shipped-status/regression-demotes-via-branch-4">
+      <span class="id">regression-demotes-via-branch-4</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/6 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/intent-shipped-status/report-renders-shipped-section">
+      <span class="id">report-renders-shipped-section</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/6 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/intent-shipped-status/shipped-allows-branch-4">
+      <span class="id">shipped-allows-branch-4</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/6 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/intent-shipped-status/shipped-skipped-by-branch-2">
+      <span class="id">shipped-skipped-by-branch-2</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/6 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/intent-shipped-status/shipped-skipped-by-branch-3">
+      <span class="id">shipped-skipped-by-branch-3</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/6 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/intent-shipped-status/spec-mentions-shipped-status">
+      <span class="id">spec-mentions-shipped-status</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/3 retries
+        
+        
+      </span>
+    </div>
+    
+  </div>
+</section>
+
+<section class="card draft" id="draft/swarm-tick">
+  <h3>swarm-tick <span class="cap-meta">— v2 · draft · watcher @ryan</span></h3>
+  <div class="summary-line">
+    none: 22
+  </div>
+  <div class="item-grid">
+    
+    <div class="item" id="draft-item/swarm-tick/batch-tick-respects-depends-on">
+      <span class="id">batch-tick-respects-depends-on</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/6 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/swarm-tick/batch-tick-runs-frontier-in-parallel">
+      <span class="id">batch-tick-runs-frontier-in-parallel</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/10 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/swarm-tick/batch-tick-serializes-touches-overlap">
+      <span class="id">batch-tick-serializes-touches-overlap</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/6 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/swarm-tick/claim-json-records-agent-and-step">
+      <span class="id">claim-json-records-agent-and-step</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/3 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/swarm-tick/claim-json-records-pid-tick-and-time">
+      <span class="id">claim-json-records-pid-tick-and-time</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/3 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/swarm-tick/frontmatter-is-mirror-not-source-of-truth">
+      <span class="id">frontmatter-is-mirror-not-source-of-truth</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/6 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/swarm-tick/frontmatter-status-untouched">
+      <span class="id">frontmatter-status-untouched</span>
+      <span class="type">constraint · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/3 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/swarm-tick/live-claim-blocks-second-claimant">
+      <span class="id">live-claim-blocks-second-claimant</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/6 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/swarm-tick/orchestrator-only-writes-runtime-block">
+      <span class="id">orchestrator-only-writes-runtime-block</span>
+      <span class="type">constraint · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/3 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/swarm-tick/runtime-block-cleared-on-release">
+      <span class="id">runtime-block-cleared-on-release</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/6 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/swarm-tick/runtime-block-cleared-on-stale-sweep">
+      <span class="id">runtime-block-cleared-on-stale-sweep</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/6 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/swarm-tick/runtime-block-written-on-claim">
+      <span class="id">runtime-block-written-on-claim</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/6 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/swarm-tick/runtime-step-updates-as-phase-advances">
+      <span class="id">runtime-step-updates-as-phase-advances</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/6 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/swarm-tick/shippable-still-noop">
+      <span class="id">shippable-still-noop</span>
+      <span class="type">constraint · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/3 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/swarm-tick/single-cap-behaves-as-today">
+      <span class="id">single-cap-behaves-as-today</span>
+      <span class="type">constraint · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/3 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/swarm-tick/spec-mentions-swarm-and-claims">
+      <span class="id">spec-mentions-swarm-and-claims</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/3 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/swarm-tick/stale-claim-with-dead-pid-reclaimed">
+      <span class="id">stale-claim-with-dead-pid-reclaimed</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/6 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/swarm-tick/tick-log-batch-shape">
+      <span class="id">tick-log-batch-shape</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/3 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/swarm-tick/worktree-merge-clean">
+      <span class="id">worktree-merge-clean</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/6 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/swarm-tick/worktree-merge-conflict-isolates-failure">
+      <span class="id">worktree-merge-conflict-isolates-failure</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/10 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/swarm-tick/worktree-mkdir-is-atomic-claim">
+      <span class="id">worktree-mkdir-is-atomic-claim</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/6 retries
+        
+        
+      </span>
+    </div>
+    
+    <div class="item" id="draft-item/swarm-tick/worktree-removed-on-success-and-failure">
+      <span class="id">worktree-removed-on-success-and-failure</span>
+      <span class="type">case · pytest</span>
+      <span class="pill none">no data</span>
+      
+      <span class="meta">
+        0/6 retries
+        
+        
+      </span>
+    </div>
+    
+  </div>
+</section>
 
 
 
@@ -372,29 +1507,124 @@
 <h2>Recent ticks</h2>
 
 
-<article class="card tick" id="tick/2026-05-20-9b0619">
-  <div class="tick-header">2026-05-20-9b0619 <span class="cap-meta">— 2026-05-20 15:56:49Z</span></div>
+<article class="card tick" id="tick/2026-05-20-ce3431">
+  <div class="tick-header">2026-05-20-ce3431 <span class="cap-meta">— 2026-05-20 17:32:55Z</span></div>
   <ul>
-    <li>develop: fast-tick-noop (intent v2 first develop; new=5 changed=0 removed=0; files_touched=2)</li><li>evidence: fast-tick-noop pass=5 fail=0 met=0 unmet=0 awaiting=0</li>
+    <li>ran_develop: tick-log-sub-actions (TickLog.sub_actions + exclude_none in write)</li><li>ran_evidence: tick-log-sub-actions (pass=1 total=1)</li>
   </ul>
 </article>
 
-<article class="card tick" id="tick/2026-05-20-137c76">
-  <div class="tick-header">2026-05-20-137c76 <span class="cap-meta">— 2026-05-20 15:39:01Z</span></div>
+<article class="card tick" id="tick/2026-05-20-083d42">
+  <div class="tick-header">2026-05-20-083d42 <span class="cap-meta">— 2026-05-20 17:31:43Z</span></div>
   <ul>
-    <li>develop: report-shows-drafts (intent v1 first develop; new=5 changed=0 removed=0; files_touched=4)</li><li>evidence: report-shows-drafts pass=5 fail=0 met=0 unmet=0 awaiting=0</li>
+    <li>ran_develop: worktree-dispatch-and-merge (dispatch_batch via ThreadPoolExecutor; real git worktree integration deferred)</li><li>ran_evidence: worktree-dispatch-and-merge (pass=1 total=1)</li>
   </ul>
 </article>
 
+<article class="card tick" id="tick/2026-05-20-aa36d7">
+  <div class="tick-header">2026-05-20-aa36d7 <span class="cap-meta">— 2026-05-20 17:30:08Z</span></div>
+  <ul>
+    <li>ran_develop: batch-tick-planner (plan_batch: scoped -&gt; ready -&gt; non-overlapping touches greedy)</li><li>ran_evidence: batch-tick-planner (pass=1 total=1)</li>
+  </ul>
+</article>
+
+<article class="card tick" id="tick/2026-05-20-655c67">
+  <div class="tick-header">2026-05-20-655c67 <span class="cap-meta">— 2026-05-20 17:28:42Z</span></div>
+  <ul>
+    <li>ran_develop: runtime-frontmatter-mirror (Frontmatter.runtime + mirror/clear/read in swarm.py)</li><li>ran_evidence: runtime-frontmatter-mirror (pass=1 total=1)</li>
+  </ul>
+</article>
+
+<article class="card tick" id="tick/2026-05-20-c5eeae">
+  <div class="tick-header">2026-05-20-c5eeae <span class="cap-meta">— 2026-05-20 17:26:12Z</span></div>
+  <ul>
+    <li>ran_develop: atomic-worktree-claim (swarm.py: Claim + acquire/release/sweep + is_pid_alive)</li><li>ran_evidence: atomic-worktree-claim (pass=1 total=1)</li>
+  </ul>
+</article>
+
+<article class="card tick" id="tick/2026-05-20-860a98">
+  <div class="tick-header">2026-05-20-860a98 <span class="cap-meta">— 2026-05-20 17:21:29Z</span></div>
+  <ul>
+    <li>demoted: swarm-tick (active -&gt; draft) for slicing</li><li>i2e_spec.save_decomposition: swarm-tick -&gt; 5 draft intents (atomic-worktree-claim, runtime-frontmatter-mirror, batch-tick-planner, worktree-dispatch-and-merge, tick-log-sub-actions)</li>
+  </ul>
+</article>
+
+<article class="card tick" id="tick/2026-05-20-77e2e9">
+  <div class="tick-header">2026-05-20-77e2e9 <span class="cap-meta">— 2026-05-20 17:17:00Z</span></div>
+  <ul>
+    <li>ran_develop: serve-no-self-refresh-loop (filter report.html + report.html.tmp in _WatchdogHandler._emit)</li><li>ran_evidence: serve-no-self-refresh-loop (pass=4 total=4)</li>
+  </ul>
+</article>
+
+<article class="card tick" id="tick/2026-05-20-ea377b">
+  <div class="tick-header">2026-05-20-ea377b <span class="cap-meta">— 2026-05-20 17:13:31Z</span></div>
+  <ul>
+    <li>ran_develop: report-rename-attempts-to-retries (template label only; attempts_used field intact)</li><li>ran_evidence: report-rename-attempts-to-retries (pass=3 total=3)</li>
+  </ul>
+</article>
+
+<article class="card tick" id="tick/2026-05-20-d29749">
+  <div class="tick-header">2026-05-20-d29749 <span class="cap-meta">— 2026-05-20 17:09:38Z</span></div>
+  <ul>
+    <li>ran_develop: i2e-spec-skill (decompose + reconcile + spec/spec_section frontmatter)</li><li>ran_evidence: i2e-spec-skill (pass=9 total=9)</li>
+  </ul>
+</article>
+
+<article class="card tick" id="tick/2026-05-20-051607">
+  <div class="tick-header">2026-05-20-051607 <span class="cap-meta">— 2026-05-20 17:01:36Z</span></div>
+  <ul>
+    <li>ran_develop: develop-parallel-fanout (plan_develop + execute_plan in develop.py)</li><li>ran_evidence: develop-parallel-fanout (fail=1 -&gt; fixed kebab id -&gt; pass=6 total=6)</li>
+  </ul>
+</article>
 
 </main>
 <script>
-// Live reload via SSE — works only when served by i2e-serve. Fails silently for file://.
+// Live updates via SSE — works only when served by i2e-serve. Fails silently for file://.
+// On change, fetch /partial and swap <main>'s innerHTML so scroll position and
+// any open <details>/<textarea> input survive the refresh. A pulse + timestamp
+// in the banner give a visible heartbeat so the user can tell updates are arriving.
 (function() {
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+  function nowStamp() {
+    var d = new Date();
+    return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+  }
+  function showHeartbeat() {
+    var stamp = document.getElementById('live-stamp');
+    if (stamp) {
+      stamp.textContent = 'updated ' + nowStamp();
+      stamp.classList.add('visible', 'flash');
+      setTimeout(function() { stamp.classList.remove('flash'); }, 600);
+    }
+    var main = document.querySelector('main');
+    if (main) {
+      main.classList.remove('refreshed');
+      // Force reflow so the animation restarts when events fire close together.
+      void main.offsetWidth;
+      main.classList.add('refreshed');
+    }
+  }
+  function refreshMain() {
+    fetch('/partial', { cache: 'no-store' })
+      .then(function(r) { if (!r.ok) throw new Error('bad status'); return r.text(); })
+      .then(function(html) {
+        var main = document.querySelector('main');
+        if (main) main.innerHTML = html;
+        showHeartbeat();
+      })
+      .catch(function() { /* partial endpoint unavailable; leave page as-is */ });
+  }
   try {
     var src = new EventSource('/events');
-    src.onmessage = function() { location.reload(); };
-    src.addEventListener('change', function() { location.reload(); });
+    src.onmessage = refreshMain;
+    src.addEventListener('change', refreshMain);
+    src.addEventListener('ready', function() {
+      var stamp = document.getElementById('live-stamp');
+      if (stamp) {
+        stamp.textContent = 'live';
+        stamp.classList.add('visible');
+      }
+    });
     src.onerror = function() { /* server unavailable; ignore */ };
   } catch (e) { /* file:// scheme will SecurityError — silent */ }
 })();

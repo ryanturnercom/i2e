@@ -1,0 +1,5 @@
+tick_id: 2026-05-20-c5eeae
+ran_at: '2026-05-20T17:26:12.737836Z'
+actions:
+- 'ran_develop: atomic-worktree-claim (swarm.py: Claim + acquire/release/sweep + is_pid_alive)'
+- 'ran_evidence: atomic-worktree-claim (pass=1 total=1)'

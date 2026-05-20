@@ -3,8 +3,11 @@ capability: serve-no-self-refresh-loop
 created: '2026-05-20'
 updated: '2026-05-20'
 version: 1
-status: draft
+status: active
 watcher: '@ryan'
+touches:
+  - 'src/i2e_core/serve.py'
+  - 'tests/test_serve_no_self_refresh.py'
 ---
 
 # i2e-serve must not self-trigger refreshes

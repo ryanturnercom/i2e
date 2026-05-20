@@ -1,0 +1,6 @@
+tick_id: 2026-05-20-ea377b
+ran_at: '2026-05-20T17:13:31.003629Z'
+actions:
+- 'ran_develop: report-rename-attempts-to-retries (template label only; attempts_used
+  field intact)'
+- 'ran_evidence: report-rename-attempts-to-retries (pass=3 total=3)'

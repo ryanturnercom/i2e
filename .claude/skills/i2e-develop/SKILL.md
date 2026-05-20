@@ -41,6 +41,14 @@ separation makes the loop simple to reason about.
 5. For each new/changed item, use `i2e_core.develop.suggested_src_paths(cap)`
    and `i2e_core.develop.suggested_test_paths(item)` as defaults — you are
    free to override when the codebase clearly wants something else.
+5a. Call `i2e_core.develop.plan_develop(cap)` to fan out across independent
+   files. The returned `DevelopPlan.batches` is an ordered list of parallel
+   batches: members of one batch target distinct files (run with one
+   sub-agent per goal via the Agent tool), and successive batches run
+   sequentially. Single-file capabilities collapse to one batch of one
+   goal — no parallel-slot overhead. `plan.skipped_out_of_scope` reports
+   any goal the planner refused because its path fell outside `touches:`;
+   if it's non-empty, fix the intent rather than working around it.
 6. Write/update code in `src/` and tests in `tests/` to satisfy every Case and
    every Constraint in the current intent.
 7. Do NOT run pytest — that's `i2e-evidence`'s job.
@@ -61,6 +69,8 @@ separation makes the loop simple to reason about.
 - `i2e_core.develop.suggested_src_paths(cap) -> list[Path]`
 - `i2e_core.develop.suggested_test_paths(item) -> Path | None`
 - `i2e_core.develop.develop_summary(diff, files_touched) -> str`
+- `i2e_core.develop.plan_develop(cap) -> DevelopPlan`
+- `i2e_core.develop.execute_plan(plan, writer, root=None) -> WriteReport`
 - `i2e_core.context.list_context_files(root) -> list[Path]`
 - `i2e_core.context.load_context(root, max_chars=80_000) -> dict[str, str]`
 - `i2e_core.context.context_summary(root) -> str`

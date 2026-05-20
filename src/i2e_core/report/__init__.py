@@ -19,6 +19,7 @@ from .view_model import (
     TickView,
     build_view_model,
     render,
+    render_main_to_string,
     render_to_string,
 )
 
@@ -30,5 +31,6 @@ __all__ = [
     "TickView",
     "build_view_model",
     "render",
+    "render_main_to_string",
     "render_to_string",
 ]

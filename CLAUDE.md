@@ -7,11 +7,14 @@ This is **Intent-to-Evidence (Simplified)** — a skills-driven SDLC where human
 ```
 src/i2e_core/         deterministic Python core (Pydantic v2 throughout)
 tests/                pytest suite — uses tmp_path; never touches real .i2e/
-.i2e/                 this project's own intent + evidence (mostly empty)
-.claude/skills/       loop skills (i2e, i2e-intent, ...) + provider skills
+.i2e/                 this project's own intents + evidence (dogfooded)
+.claude/skills/       7 loop skills + 6 provider skills (13 total)
+.claude/commands/     slash commands (e.g. /release)
 .blueprints/          execution history; one folder per epic (09 total, all green)
 .documentation/       canonical spec — source of truth
 examples/             working demos that use i2e_core (e.g. url-shortener)
+packaging/            build_bundles.py — assembles dist/ from .claude/skills/
+dist/                 generated bundles (gitignored); rebuild via tasks.ps1 bundle
 ```
 
 ## Run things
@@ -24,9 +27,17 @@ Python: 3.11+. Editable install in `.venv/`.
 ./tasks.ps1 cov         # pytest --cov=i2e_core --cov-report=term-missing
 ./tasks.ps1 e2e         # pytest -m e2e (the spec §10 worked example)
 ./tasks.ps1 all         # test + e2e
+./tasks.ps1 bundle      # rebuild dist/ from .claude/skills/
 ```
 
 Or directly: `.venv\Scripts\python.exe -m pytest -q`.
+
+## Releasing
+
+`/release [patch|minor|major]` — bumps `pyproject.toml` (single source of
+truth for the version), rebuilds `dist/`, commits everything dirty in one
+release commit, tags, and pushes to `origin/main`. Default bump is `patch`.
+Never edit `dist/` by hand; never skip hooks; never force-push.
 
 ## Conventions (non-obvious)
 

@@ -1,0 +1,6 @@
+tick_id: 2026-05-20-77e2e9
+ran_at: '2026-05-20T17:17:00.246200Z'
+actions:
+- 'ran_develop: serve-no-self-refresh-loop (filter report.html + report.html.tmp in
+  _WatchdogHandler._emit)'
+- 'ran_evidence: serve-no-self-refresh-loop (pass=4 total=4)'

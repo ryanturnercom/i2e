@@ -1,0 +1,25 @@
+capability: report-rename-attempts-to-retries
+last_run: 2026-05-20-83a661
+intent_version: 1
+items:
+  report-shows-retries-label:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-20T17:13:22.713009Z'
+    pending: null
+    raw: {}
+  current-yaml-field-unchanged:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-20T17:13:23.065562Z'
+    pending: null
+    raw: {}
+  report-renders-without-error:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-20T17:13:23.656219Z'
+    pending: null
+    raw: {}

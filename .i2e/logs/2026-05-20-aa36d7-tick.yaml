@@ -1,0 +1,6 @@
+tick_id: 2026-05-20-aa36d7
+ran_at: '2026-05-20T17:30:08.992517Z'
+actions:
+- 'ran_develop: batch-tick-planner (plan_batch: scoped -> ready -> non-overlapping
+  touches greedy)'
+- 'ran_evidence: batch-tick-planner (pass=1 total=1)'

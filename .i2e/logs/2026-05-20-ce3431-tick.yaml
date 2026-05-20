@@ -1,0 +1,5 @@
+tick_id: 2026-05-20-ce3431
+ran_at: '2026-05-20T17:32:55.458273Z'
+actions:
+- 'ran_develop: tick-log-sub-actions (TickLog.sub_actions + exclude_none in write)'
+- 'ran_evidence: tick-log-sub-actions (pass=1 total=1)'

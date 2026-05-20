@@ -146,6 +146,26 @@
   article.tick { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
   article.tick .tick-header { font-weight: 600; margin-bottom: 4px; }
   article.tick ul { margin: 4px 0 0 18px; padding: 0; }
+  /* Live-update indicator (i2e-serve only) */
+  .live-stamp {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: var(--pill-awaiting-bg);
+    color: var(--pill-awaiting-fg);
+    font-size: 11px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    opacity: 0;
+    transition: opacity 0.2s ease-out;
+  }
+  .live-stamp.visible { opacity: 1; }
+  .live-stamp.flash { background: var(--pill-pass-bg); color: var(--pill-pass-fg); }
+  @keyframes mainPulse {
+    0%   { box-shadow: inset 0 0 0 2px var(--pill-pass-fg); }
+    100% { box-shadow: inset 0 0 0 2px transparent; }
+  }
+  main.refreshed { animation: mainPulse 0.6s ease-out; }
   @media (max-width: 600px) {
     main { padding: 12px; }
     header.banner { padding: 12px; }
@@ -158,6 +178,7 @@
     <h1>{{ project_name }} <span class="banner-meta">— i2e report</span></h1>
     <div class="banner-meta">
       Generated at {{ generated_at_display }}{% if last_tick_id %} · last tick {{ last_tick_id }}{% endif %}
+      <span id="live-stamp" class="live-stamp" title="Live update received from i2e-serve"></span>
     </div>
   </div>
   <div>
@@ -171,99 +192,54 @@
     </div>
   </div>
 </header>
-<main>
-
-<h2>Capabilities</h2>
-{% if not capabilities %}
-  <section class="card"><em>No active capabilities yet.</em></section>
-{% endif %}
-{% for cap in capabilities %}
-<section class="card" id="cap/{{ cap.slug }}">
-  <h3>{{ cap.slug }} <span class="cap-meta">— v{{ cap.version }} · {{ cap.status }} · watcher {{ cap.watcher }}</span></h3>
-  <div class="summary-line">
-    {% for verdict, count in cap.summary_sorted %}{{ verdict }}: {{ count }}{% if not loop.last %} · {% endif %}{% endfor %}
-  </div>
-  <div class="item-grid">
-    {% for item in cap.items %}
-    <div class="item" id="item/{{ cap.slug }}/{{ item.id }}">
-      <span class="id">{{ item.id }}</span>
-      <span class="type">{{ item.type }}{% if item.provider %} · {{ item.provider }}{% endif %}</span>
-      <span class="pill {{ item.verdict_class }}">{{ item.verdict_label }}</span>
-      {% if item.value is not none %}<span class="value">{{ item.value }}</span>{% endif %}
-      <span class="meta">
-        {{ item.attempts_used }}/{{ item.max_attempts }} attempts
-        {% if item.last_observed %} · last {{ item.last_observed }}{% endif %}
-        {% if item.pending_basename %} · pending {{ item.pending_basename }}{% endif %}
-      </span>
-    </div>
-    {% endfor %}
-  </div>
-</section>
-{% endfor %}
-
-{% if drafts %}
-<h2 class="drafts-heading">Drafts</h2>
-{% for cap in drafts %}
-<section class="card draft" id="draft/{{ cap.slug }}">
-  <h3>{{ cap.slug }} <span class="cap-meta">— v{{ cap.version }} · {{ cap.status }} · watcher {{ cap.watcher }}</span></h3>
-  <div class="summary-line">
-    {% for verdict, count in cap.summary_sorted %}{{ verdict }}: {{ count }}{% if not loop.last %} · {% endif %}{% endfor %}
-  </div>
-  <div class="item-grid">
-    {% for item in cap.items %}
-    <div class="item" id="draft-item/{{ cap.slug }}/{{ item.id }}">
-      <span class="id">{{ item.id }}</span>
-      <span class="type">{{ item.type }}{% if item.provider %} · {{ item.provider }}{% endif %}</span>
-      <span class="pill {{ item.verdict_class }}">{{ item.verdict_label }}</span>
-      {% if item.value is not none %}<span class="value">{{ item.value }}</span>{% endif %}
-      <span class="meta">
-        {{ item.attempts_used }}/{{ item.max_attempts }} attempts
-        {% if item.last_observed %} · last {{ item.last_observed }}{% endif %}
-        {% if item.pending_basename %} · pending {{ item.pending_basename }}{% endif %}
-      </span>
-    </div>
-    {% endfor %}
-  </div>
-</section>
-{% endfor %}
-{% endif %}
-
-<h2>Pending queue</h2>
-{% if not pending %}
-  <section class="card"><em>No open pending files.</em></section>
-{% endif %}
-{% for p in pending %}
-<details class="card" id="pending/{{ p.filename }}">
-  <summary>{{ p.filename }} <span class="cap-meta">— {{ p.kind }} · {{ p.capability }}/{{ p.item_id }} · {{ p.status }}</span></summary>
-  <div><strong>ask:</strong> {{ p.ask }}</div>
-  {% if p.verdict_options %}
-    <div class="cap-meta">options: {{ p.verdict_options|join(', ') }}</div>
-  {% endif %}
-  <textarea class="resolution" placeholder="resolution: (edit and save)">{{ p.resolution_template }}</textarea>
-</details>
-{% endfor %}
-
-<h2>Recent ticks</h2>
-{% if not ticks %}
-  <section class="card"><em>No tick logs yet.</em></section>
-{% endif %}
-{% for t in ticks %}
-<article class="card tick" id="tick/{{ t.tick_id }}">
-  <div class="tick-header">{{ t.tick_id }} <span class="cap-meta">— {{ t.ran_at }}</span></div>
-  <ul>
-    {% for a in t.actions %}<li>{{ a }}</li>{% endfor %}
-  </ul>
-</article>
-{% endfor %}
-
-</main>
+<main>{% include 'report_main.html.j2' %}</main>
 <script>
-// Live reload via SSE — works only when served by i2e-serve. Fails silently for file://.
+// Live updates via SSE — works only when served by i2e-serve. Fails silently for file://.
+// On change, fetch /partial and swap <main>'s innerHTML so scroll position and
+// any open <details>/<textarea> input survive the refresh. A pulse + timestamp
+// in the banner give a visible heartbeat so the user can tell updates are arriving.
 (function() {
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+  function nowStamp() {
+    var d = new Date();
+    return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+  }
+  function showHeartbeat() {
+    var stamp = document.getElementById('live-stamp');
+    if (stamp) {
+      stamp.textContent = 'updated ' + nowStamp();
+      stamp.classList.add('visible', 'flash');
+      setTimeout(function() { stamp.classList.remove('flash'); }, 600);
+    }
+    var main = document.querySelector('main');
+    if (main) {
+      main.classList.remove('refreshed');
+      // Force reflow so the animation restarts when events fire close together.
+      void main.offsetWidth;
+      main.classList.add('refreshed');
+    }
+  }
+  function refreshMain() {
+    fetch('/partial', { cache: 'no-store' })
+      .then(function(r) { if (!r.ok) throw new Error('bad status'); return r.text(); })
+      .then(function(html) {
+        var main = document.querySelector('main');
+        if (main) main.innerHTML = html;
+        showHeartbeat();
+      })
+      .catch(function() { /* partial endpoint unavailable; leave page as-is */ });
+  }
   try {
     var src = new EventSource('/events');
-    src.onmessage = function() { location.reload(); };
-    src.addEventListener('change', function() { location.reload(); });
+    src.onmessage = refreshMain;
+    src.addEventListener('change', refreshMain);
+    src.addEventListener('ready', function() {
+      var stamp = document.getElementById('live-stamp');
+      if (stamp) {
+        stamp.textContent = 'live';
+        stamp.classList.add('visible');
+      }
+    });
     src.onerror = function() { /* server unavailable; ignore */ };
   } catch (e) { /* file:// scheme will SecurityError — silent */ }
 })();

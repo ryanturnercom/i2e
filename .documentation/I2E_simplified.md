@@ -54,6 +54,9 @@ updated: 2026-05-19
 version: 1
 status: active                    # draft | active | retired
 watcher: '@platform-team'         # default for every item below
+depends_on: []                    # optional; slugs this capability waits on
+touches: ['src/shorten_url/**', 'tests/test_shorten_url.py']
+                                  # optional; globs develop is allowed to write
 ---
 
 # Shorten a URL
@@ -102,6 +105,25 @@ A user turns a long URL into a short one and is redirected.
 ```
 
 Three sections; every item has the **same shape**.
+
+`depends_on:` is an optional list of capability slugs this one must wait on.
+When present, preflight rejects unknown references and any cycle, and
+`decide()` will not advance a child capability while a parent is still in
+the develop-needed set (see §6.1).
+
+`touches:` is an optional list of globs describing the file paths
+`i2e-develop` is allowed to write for this Capability. When omitted, it
+defaults to `['**']` — the legacy "may write anywhere" behaviour. A
+post-develop check fails the tick if any file outside the declared scope
+was modified. Two capabilities whose `touches:` globs overlap may not run
+in parallel (see §4.1).
+
+`spec:` and `spec_section:` are optional frontmatter fields populated by
+the `i2e-spec` skill (§4.1) when a capability is decomposed from a PRD.
+`spec:` is the slug of the source spec under `.i2e/specs/`; `spec_section:`
+is the 1-based section index. Together they let `i2e-spec --reconcile`
+diff the on-disk spec against the intents that claim it and propose
+add/edit/retire pending files.
 
 ### 2.2 Case vs. Target — the deciding test
 
@@ -162,6 +184,7 @@ rather have a human decide than have the AI thrash.
 ├── tests/                normal test layout
 ├── .i2e/
 │   ├── context/          standing reference docs — DESIGN.md, ARCHITECTURE.md...
+│   ├── specs/            preserved source PRDs/design docs decomposed via `i2e-spec`
 │   ├── intents/          one file per Capability
 │   ├── evidence/
 │   │   └── <capability>/
@@ -191,7 +214,8 @@ collect evidence. All follow the agentskills.io SKILL.md convention.
 |---|---|
 | `i2e` | Orchestrator. Runs a preflight scan and advances the project by one step. |
 | `i2e-intent` | Author or edit Capability files. Only skill that touches `draft` intents. |
-| `i2e-develop` | Build the System in `src/`. Reads `.i2e/context/` for standing reference. |
+| `i2e-spec` | Bulk decomposer: a PRD or design doc -> N draft capability files under `.i2e/intents/`, with the source preserved under `.i2e/specs/<slug>.md`. `--reconcile <slug>` diffs an edited spec against the intents that claim it. |
+| `i2e-develop` | Build the System in `src/`. Reads `.i2e/context/` for standing reference. Honours `touches:` — writes outside the declared globs fail the tick. Fans out within a capability: a `plan_develop` step groups evidence items by target file and runs distinct files in parallel sub-agents (one batch per same-file depth), so a capability that touches three independent files lands in roughly the time of the slowest. |
 | `i2e-evidence` | For each item, invoke its provider skill; write `current.yaml` + a new `runs/<id>.yaml`. |
 | `i2e-adapt` | Read evidence; auto-revise + re-trigger Develop within budget; on exhaustion, write to `pending/`. |
 | `i2e-report` | Render `.i2e/report.html` from current state. Auto-called by `i2e` after any state-changing tick. Deterministic Python, zero LLM tokens. |
@@ -226,6 +250,10 @@ orchestrator tick (in `i2e`'s preflight). A Capability is **invalid** if:
    collect.*
 3. The Capability has zero evidence items. *Every intent has at least one
    way to know it worked.*
+4. The `depends_on:` graph across all active intents must be acyclic and
+   every referenced slug must exist as an active capability. *You cannot
+   depend on something that isn't real, and a cycle would deadlock the
+   loop.*
 
 There are no other "ceremony" gates. Shipping is gated by **all Cases pass
 and all Constraints hold** in the latest `current.yaml`. Targets do not
@@ -245,7 +273,10 @@ action that applies:
    → apply the human's resolution to the intent file, archive to logs/
 
 2. Any active intent file with no matching evidence (new or version-bumped)?
-   → i2e-develop, then i2e-evidence on that Capability
+   → i2e-develop, then i2e-evidence on that Capability.
+   `depends_on:` is respected: among the set of capabilities that need
+   develop, a child whose parent is also in the set is held back; the
+   alphabetical tiebreaker applies only inside the *ready* set.
 
 3. Any current.yaml showing trending/unmet items with budget remaining?
    → i2e-adapt → another i2e-develop + i2e-evidence cycle
@@ -477,6 +508,141 @@ development. The cases are version-controlled, the fix is permanent.
    capability of the system.
 7. **Tokens are precious.** Anything deterministic (rendering, file
    writes, validation) lives in Python scripts, not LLM reasoning.
+8. **Declared file scope > inferred.** A Capability's `touches:` globs are
+   the source of truth for what develop may write. Parallel scheduling and
+   the post-develop check both rely on this — never infer scope from
+   accidental write history.
+9. **Parallelize within capability when files are independent.** A
+   Capability that touches multiple independent files runs one sub-agent
+   per file in parallel; same-file goals serialize. Single-file
+   capabilities skip the fan-out and run as one direct write — no overhead.
+
+---
+
+## 12. Planned extensions (v2 design)
+
+The sections above describe the system as it ships today. Five staged
+intents (all `status: draft` until reviewed) propose a v2 design that
+addresses four gaps: PRD ingestion, dependency ordering, multi-capability
+parallelism, and within-capability fan-out.
+
+Each item below links to a draft intent under `.i2e/intents/`. None has
+been activated; this section will be folded into the relevant numbered
+sections above as each intent reaches `shippable`.
+
+### 12.1 Capability dependencies — `depends_on:`
+Intent: [`intent-depends-on-field`](../.i2e/intents/intent-depends-on-field.md)
+
+Add `depends_on: [slug, ...]` to capability frontmatter. Preflight rejects
+cycles and unknown references. `decide()` topologically sorts the eligible
+set before the existing alphabetical tiebreaker, so a child never fires
+before its parent reaches `shippable`. Lands changes in §2.1, §5, §6.1.
+
+### 12.2 Declared file scope — `touches:`
+Intent: [`intent-touches-field`](../.i2e/intents/intent-touches-field.md)
+
+Add `touches: [glob, ...]` to capability frontmatter. `i2e-develop` may
+not write outside the declared globs (post-develop check). Two capabilities
+with overlapping `touches:` cannot run in parallel — the swarm scheduler
+serializes them. Lands changes in §2.1, §4.1, and adds a principle in §11.
+
+### 12.3 Swarm tick — one batch per tick
+Intent: [`swarm-tick`](../.i2e/intents/swarm-tick.md)
+
+Replaces "one action per tick" with "one batch of non-conflicting actions
+per tick." Builds on 12.1 and 12.2. Algorithm: compute eligible set →
+topo-sort by `depends_on:` → greedy-select a batch with no `touches:`
+overlap → claim each capability by atomically creating its
+`.i2e/worktrees/<slug>/` directory → dispatch develop + evidence in
+parallel via the Agent tool's `isolation: worktree` → merge results back
+deterministically.
+
+**Concurrency primitive — worktree directory as claim**
+
+There are no hidden `.lock` sidecar files. A capability is "claimed" iff
+`.i2e/worktrees/<slug>/` exists, and the atomic primitive is
+`os.makedirs(path, exist_ok=False)` (CAS on directory existence; atomic on
+both POSIX and Windows). Inside the worktree, `claim.json` records
+`{pid, tick_id, started_at}` for liveness checks. A dead PID means a
+stale claim — the next tick removes the worktree and reclaims.
+
+Frontmatter `status:` remains intent state (`draft`/`active`/`retired`)
+and is never touched by the tick. After a successful claim, the
+orchestrator *mirrors* a minimal `runtime:` block into the intent
+frontmatter (agent_id, session_id, tick_id, step, started_at, worktree)
+for at-a-glance visibility — `grep -l "^runtime:" .i2e/intents/*.md`
+shows what's running. The mirror is removed on release. `claim.json`
+remains authoritative; deleting the `runtime:` block by hand does not
+release the lock — only removing the worktree (or stale-PID sweep) does.
+The orchestrator gets a narrow carve-out to write the `runtime:` block
+only; `i2e-intent` still owns the rest of the frontmatter.
+
+No global lock is required at the orchestrator level: two concurrent ticks
+are safe as long as they claim disjoint capabilities. Lands changes in §2.1,
+§3, §6.1, §8, §9, §11.
+
+### 12.4 PRD → intents — `i2e-spec` skill
+Intent: [`i2e-spec-skill`](../.i2e/intents/i2e-spec-skill.md)
+
+New loop skill that ingests a markdown PRD or design doc and decomposes
+it into N draft intent files with `depends_on:` and `touches:` populated
+from the spec's structure. Preserves the original at `.i2e/specs/<slug>.md`.
+Each generated intent's frontmatter links back: `spec: <slug>`,
+`spec_section: <ref>`. A `--reconcile` subcommand keeps the intents and
+the source spec in sync over time. Lands changes in §2.1, §3, §4.1, and
+Appendix B.
+
+### 12.5 Within-capability fan-out — parallel develop
+Intent: [`develop-parallel-fanout`](../.i2e/intents/develop-parallel-fanout.md)
+
+`i2e-develop` plans a file-level task list and spawns one Agent per
+independent file in parallel (Claude Code's Agent tool already supports
+this). Goals sharing a file run sequentially. Requires 12.2 for the
+`touches:` scope. Lands changes in §4.1 and adds a principle in §11.
+
+### 12.6 `shipped` status for completed capabilities
+Intent: [`intent-shipped-status`](../.i2e/intents/intent-shipped-status.md)
+
+Adds a fourth status — `shipped` — to the `draft` / `active` / `retired`
+trio. Auto-promote `active → shipped` the first tick `current.yaml` is
+all-green (every verdict in `{pass, met}`). Shipped capabilities are
+skipped by branches 1–3 but branch 4 (target `window:` elapsed) still
+applies — if a target re-evaluates to `unmet`/`trending`/`fail` the
+orchestrator auto-demotes back to `active`. Case (pytest) regressions
+do **not** auto-demote — see 12.7. Status writes happen through the same
+narrow orchestrator carve-out used by `runtime:` in 12.3. The report
+renders shipped capabilities in their own "Shipped (N)" section. Lands
+changes in §2.1, §6.1, §8.
+
+### 12.7 `i2e-regression` skill — periodic case re-validation
+Intent: [`i2e-regression`](../.i2e/intents/i2e-regression.md)
+
+Companion to 12.6. The IDEA loop has no mechanism to re-run pytest cases
+for shipped capabilities — code rot, dependency upgrades, or external
+regressions can silently break them. The `i2e-regression` skill re-runs
+all case + constraint evidence for shipped (or active, or all)
+capabilities on demand or via cadence. Cases that flip to `fail` demote
+the owning capability from `shipped → active`, returning it to the
+normal IDEA loop. Targets are explicitly out of scope (they have their
+own `window:` mechanism). Cadence is BYO — call directly, schedule via
+`/schedule`, or wire to CI. Depends on 12.6. Lands changes in §4.1, §9,
+and Appendix B.
+
+### Activation order
+
+The intents are sequenced for safe stepwise rollout:
+
+1. `intent-depends-on-field` (frontmatter only; pure data)
+2. `intent-touches-field` (frontmatter only; pure data)
+3. `swarm-tick` (orchestrator + worktree machinery + `runtime:` mirror)
+4. `intent-shipped-status` (new state + auto-promote/demote)
+5. `i2e-spec-skill` (uses 1 + 2 when decomposing)
+6. `develop-parallel-fanout` (uses 2 to plan safely)
+7. `i2e-regression` (uses 4's demotion path)
+
+Each is independently shippable in this order. Activate one at a time and
+let the IDEA loop verify before moving on. 4 can ship before 3 if you
+want shipped-status without parallel execution; 7 must come after 4.
 
 ---
 
@@ -540,6 +706,7 @@ person's subjective judgment.
 ```
 i2e                  orchestrator — preflight + one-step advance
 i2e-intent           author/edit Capability files
+i2e-spec             decompose a PRD into N draft capability files
 i2e-develop          build code in src/ from intents
 i2e-evidence         invoke providers, write current.yaml + runs/
 i2e-adapt            budgeted auto-improvement; pending on exhaustion
