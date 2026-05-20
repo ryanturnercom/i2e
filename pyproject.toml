@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "i2e_core"
-version = "0.1.1"
+version = "0.1.2"
 description = "Shared core for the Intent-to-Evidence (Simplified) SDLC."
 requires-python = ">=3.11"
 readme = "README.md"

@@ -1,7 +1,7 @@
 {
   "name": "i2e",
   "description": "Intent-to-Evidence (Simplified): a skills-driven SDLC where humans declare intent and an AI agent runs the IDEA loop (Intent → Develop → Evidence → Adapt).",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "author": {
     "name": "Ryan Turner",
     "email": "ryan@ryanturner.com"
