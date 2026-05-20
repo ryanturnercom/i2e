@@ -3,6 +3,7 @@ __pycache__/
 .venv/
 .pytest_cache/
 .i2e/.serve.url
+*.tmp
 # dist/ holds the published marketplace + agentskills bundles; keep checked in
 build/
 *.egg-info/

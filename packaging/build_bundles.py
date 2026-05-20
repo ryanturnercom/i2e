@@ -33,6 +33,7 @@ root. Re-run this script after editing any SKILL.md or provider.py.
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import zipfile
 from pathlib import Path
@@ -41,8 +42,19 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILLS_SRC = REPO_ROOT / ".claude" / "skills"
 DIST = REPO_ROOT / "dist"
 LICENSE_SRC = REPO_ROOT / "LICENSE"
+PYPROJECT = REPO_ROOT / "pyproject.toml"
 
-PLUGIN_VERSION = "0.1.0"
+
+def _read_version() -> str:
+    """Single source of truth: the [project] version in pyproject.toml."""
+    text = PYPROJECT.read_text(encoding="utf-8")
+    m = re.search(r'^version\s*=\s*"([^"]+)"', text, re.MULTILINE)
+    if not m:
+        raise SystemExit(f"could not find version in {PYPROJECT}")
+    return m.group(1)
+
+
+PLUGIN_VERSION = _read_version()
 MARKETPLACE_NAME = "i2e-skills"
 PLUGIN_NAME = "i2e"
 GITHUB_REPO_PLACEHOLDER = "ryanturnercom/i2e"  # users override on publish
