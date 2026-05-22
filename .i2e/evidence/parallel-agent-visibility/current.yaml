@@ -1,0 +1,11 @@
+capability: parallel-agent-visibility
+last_run: 2026-05-20-940238
+intent_version: 1
+items:
+  parallel-agent-visibility-implemented:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-20T19:05:02.074068Z'
+    pending: null
+    raw: {}

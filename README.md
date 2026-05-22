@@ -41,6 +41,27 @@ Or via `tasks.ps1`:
 
 A working downstream example lives at [`examples/url-shortener/`](examples/url-shortener/).
 
+## Live report server
+
+`i2e-serve` binds `127.0.0.1` on a static port (default `4230`) and opens the
+report in your default browser:
+
+```powershell
+.venv\Scripts\python.exe -m i2e_core.serve start
+# or, with overrides
+.venv\Scripts\python.exe -m i2e_core.serve start --port 8080 --no-browser
+```
+
+Override the defaults in `.i2e/config.yaml`:
+
+```yaml
+serve:
+  port: 4230            # any free TCP port; pass --port to override per-launch
+  open_browser: true    # set false to suppress auto-open
+```
+
+Stop it with `python -m i2e_core.serve stop` (reads `.i2e/.serve.url`).
+
 ## Redistributable bundles
 
 The 13 skills can be packaged for distribution as a Claude Code plugin

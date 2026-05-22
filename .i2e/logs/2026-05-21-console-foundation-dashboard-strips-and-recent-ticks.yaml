@@ -1,0 +1,24 @@
+status: resolved
+kind: human_evaluation
+capability: console-foundation
+item_id: dashboard-strips-and-recent-ticks
+asked_at: '2026-05-21T20:36:02.493447Z'
+escalated_at: null
+reason: null
+expect: yes — all three strips visible with data, recent ticks list shows at least
+  one entry
+observed: null
+attempts: []
+ask: Open the console after running /i2e — does the dashboard show all three strips
+  (Needs You, Shippability, Workers) populated and the Recent ticks list?
+verdict_options:
+- 'yes'
+- 'no'
+- partial
+resolution: 'yes
+
+
+  looks good'
+url: null
+steps: null
+screenshot: null

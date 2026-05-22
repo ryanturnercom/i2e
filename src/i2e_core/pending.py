@@ -48,6 +48,11 @@ class PendingFile(BaseModel):
     ask: str
     verdict_options: list[str] | None = None
     resolution: str | None = None
+    # Visual-review fields. Copied off the EvidenceItem by async providers so a
+    # human reviewer sees discrete cues instead of a wall of prose in `ask`.
+    url: str | None = None
+    steps: list[str] | None = None
+    screenshot: str | None = None
 
 
 def _date_prefix(when: datetime | None) -> str:
@@ -174,13 +179,19 @@ def resolve_to_verdict(pf: PendingFile) -> ItemVerdict:
         )
     now = datetime.now(timezone.utc)
     raw_resolution = (pf.resolution or "").strip()
-    resolution = raw_resolution.lower()
+    # The console resolve action writes "<verdict>\n\n<notes>" — take the
+    # first non-empty line as the verdict token so appended operator notes
+    # don't break the yes/no/partial (or numeric) match.
+    first_line = next(
+        (ln.strip() for ln in raw_resolution.splitlines() if ln.strip()), ""
+    )
+    resolution = first_line.lower()
 
     # Numeric (survey) branch — kicks in when the resolution parses as a number
     # AND ``expect`` is a comparison expression. Surveys flow through this
     # branch; the legacy human yes/no flow falls through to the literal match
     # below.
-    numeric_value = _try_numeric(raw_resolution)
+    numeric_value = _try_numeric(first_line)
     if numeric_value is not None:
         expect = (pf.expect or "").strip()
         if expect:

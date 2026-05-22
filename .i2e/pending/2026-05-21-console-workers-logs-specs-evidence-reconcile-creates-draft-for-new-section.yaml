@@ -1,0 +1,21 @@
+status: open
+kind: human_evaluation
+capability: console-workers-logs-specs-evidence
+item_id: reconcile-creates-draft-for-new-section
+asked_at: '2026-05-21T21:02:09.852710Z'
+escalated_at: null
+reason: null
+expect: yes — new draft appears under .i2e/intents/ with spec_section set; existing
+  intents unchanged
+observed: null
+attempts: []
+ask: Reconcile a spec where you've added a new section. Does it create a draft for
+  the new section without disturbing the existing intents?
+verdict_options:
+- 'yes'
+- 'no'
+- partial
+resolution: null
+url: null
+steps: null
+screenshot: null

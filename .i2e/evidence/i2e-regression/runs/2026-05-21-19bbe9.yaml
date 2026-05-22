@@ -1,0 +1,68 @@
+run_id: 2026-05-21-19bbe9
+capability: i2e-regression
+intent_version: 1
+collected_at: '2026-05-21T13:20:03.078397Z'
+items:
+  regression-runs-all-cases-for-shipped:
+    verdict: pass
+    value: null
+    attempts_used: 1
+    last_observed: '2026-05-21T13:19:59.746254Z'
+    pending: null
+    raw: {}
+  regression-respects-status-flag:
+    verdict: pass
+    value: null
+    attempts_used: 1
+    last_observed: '2026-05-21T13:20:00.130168Z'
+    pending: null
+    raw: {}
+  regression-respects-capability-flag:
+    verdict: pass
+    value: null
+    attempts_used: 1
+    last_observed: '2026-05-21T13:20:00.967049Z'
+    pending: null
+    raw: {}
+  regression-demotes-on-case-failure:
+    verdict: pass
+    value: null
+    attempts_used: 1
+    last_observed: '2026-05-21T13:20:01.355511Z'
+    pending: null
+    raw: {}
+  regression-skips-targets:
+    verdict: pass
+    value: null
+    attempts_used: 1
+    last_observed: '2026-05-21T13:20:01.708575Z'
+    pending: null
+    raw: {}
+  regression-writes-log-entry:
+    verdict: pass
+    value: null
+    attempts_used: 1
+    last_observed: '2026-05-21T13:20:02.066335Z'
+    pending: null
+    raw: {}
+  spec-mentions-i2e-regression:
+    verdict: pass
+    value: null
+    attempts_used: 1
+    last_observed: '2026-05-21T13:20:02.387260Z'
+    pending: null
+    raw: {}
+  regression-does-not-touch-targets:
+    verdict: pass
+    value: null
+    attempts_used: 1
+    last_observed: '2026-05-21T13:20:02.729278Z'
+    pending: null
+    raw: {}
+  regression-does-not-modify-draft-or-retired:
+    verdict: pass
+    value: null
+    attempts_used: 1
+    last_observed: '2026-05-21T13:20:03.078397Z'
+    pending: null
+    raw: {}

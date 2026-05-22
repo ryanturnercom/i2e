@@ -13,7 +13,10 @@ from __future__ import annotations
 
 from .view_model import (
     CapabilityView,
+    InFlightView,
     ItemView,
+    NotificationView,
+    ParallelismView,
     PendingView,
     ReportViewModel,
     TickView,
@@ -25,7 +28,10 @@ from .view_model import (
 
 __all__ = [
     "CapabilityView",
+    "InFlightView",
     "ItemView",
+    "NotificationView",
+    "ParallelismView",
     "PendingView",
     "ReportViewModel",
     "TickView",

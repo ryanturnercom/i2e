@@ -31,10 +31,16 @@ class SchedulerConfig(BaseModel):
     via: str = "claude-code-routine"
 
 
+class ServeConfig(BaseModel):
+    port: int = 4230
+    open_browser: bool = True
+
+
 class I2EConfig(BaseModel):
     effort_tiers: EffortTiers
     defaults: Defaults = Field(default_factory=Defaults)
     scheduler: SchedulerConfig = Field(default_factory=SchedulerConfig)
+    serve: ServeConfig = Field(default_factory=ServeConfig)
 
 
 _DEFAULT_CASE_TIERS = {
@@ -65,6 +71,10 @@ def _default_dict() -> dict:
         "scheduler": {
             "cadence": "weekly",
             "via": "claude-code-routine",
+        },
+        "serve": {
+            "port": 4230,
+            "open_browser": True,
         },
     }
 

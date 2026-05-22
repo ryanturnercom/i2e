@@ -26,7 +26,11 @@ def _basic_evidence() -> list[dict]:
 def test_tick_renders_real_report_with_deep_link_id(
     project: Path, write_intent, patch_providers
 ):
-    """A non-empty tick must produce ``.i2e/report.html`` containing the cap's deep-link id."""
+    """A non-empty tick must produce ``.i2e/report.html`` containing the cap's deep-link id.
+
+    A single-case all-green capability auto-promotes to ``shipped`` on the
+    first tick (spec §6.1), so the anchor lives in the Shipped section.
+    """
     patch_providers({"pytest": FakeProvider("pytest", always_pass())})
     write_intent("alpha", evidence=_basic_evidence(), version=1)
 
@@ -35,10 +39,10 @@ def test_tick_renders_real_report_with_deep_link_id(
     rp = report_path(project)
     assert rp.exists()
     text = rp.read_text(encoding="utf-8")
-    assert 'id="cap/alpha"' in text
+    assert 'id="shipped/alpha"' in text
     assert result.report_path == rp
     assert result.report_link is not None
-    assert "#cap/alpha" in result.report_link
+    assert "#shipped/alpha" in result.report_link
 
 
 def test_report_mtime_at_least_tick_log_mtime(
@@ -57,9 +61,14 @@ def test_report_mtime_at_least_tick_log_mtime(
 def test_shippable_tick_does_not_touch_report(
     project: Path, write_intent, write_current_for, patch_providers
 ):
-    """An all-green project produces ``Shippable`` and writes no report."""
+    """A steady-state shipped project produces ``Shippable`` and writes no report.
+
+    Active + all-green capabilities would auto-promote on the next tick
+    (§6.1, intent-shipped-status); to exercise the no-op steady state
+    we set the capability up as shipped from the start.
+    """
     patch_providers({"pytest": FakeProvider("pytest", always_pass())})
-    write_intent("alpha", evidence=_basic_evidence(), version=1)
+    write_intent("alpha", evidence=_basic_evidence(), version=1, status="shipped")
     write_current_for(
         "alpha",
         {"case-a": {"verdict": "pass", "attempts_used": 0}},
@@ -86,4 +95,5 @@ def test_report_link_uses_serve_url_when_available(
     result = tick(project)
     assert result.report_link is not None
     assert result.report_link.startswith("http://127.0.0.1:54321/")
-    assert "#cap/alpha" in result.report_link
+    # alpha auto-promoted to shipped on the first all-green tick (§6.1).
+    assert "#shipped/alpha" in result.report_link

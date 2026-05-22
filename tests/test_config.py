@@ -70,3 +70,21 @@ def test_load_config_rejects_non_mapping(tmp_path: Path):
     (tmp_path / ".i2e" / "config.yaml").write_text("- a\n- b\n", encoding="utf-8")
     with pytest.raises(ValueError):
         config.load_config(tmp_path)
+
+
+def test_serve_defaults():
+    cfg = config.default_config()
+    assert cfg.serve.port == 4230
+    assert cfg.serve.open_browser is True
+
+
+def test_serve_partial_override(tmp_path: Path):
+    (tmp_path / ".i2e").mkdir()
+    (tmp_path / ".i2e" / "config.yaml").write_text(
+        "serve:\n  port: 9001\n  open_browser: false\n", encoding="utf-8"
+    )
+    cfg = config.load_config(tmp_path)
+    assert cfg.serve.port == 9001
+    assert cfg.serve.open_browser is False
+    # Other sections still default
+    assert cfg.defaults.case_effort == "medium"

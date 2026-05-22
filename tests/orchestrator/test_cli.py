@@ -28,9 +28,13 @@ def _basic_evidence() -> list[dict]:
 def test_cli_exits_zero_on_shippable(
     project: Path, write_intent, write_current_for, patch_providers, capsys
 ):
-    """Shippable tick → exit 0, JSON to stdout."""
+    """Shippable tick → exit 0, JSON to stdout.
+
+    Steady-state shipped capability — auto-promote already happened on a
+    prior tick (§6.1), so this tick is a true no-op.
+    """
     patch_providers({"pytest": FakeProvider("pytest", always_pass())})
-    write_intent("alpha", evidence=_basic_evidence(), version=1)
+    write_intent("alpha", evidence=_basic_evidence(), version=1, status="shipped")
     write_current_for(
         "alpha",
         {"case-a": {"verdict": "pass", "attempts_used": 0}},

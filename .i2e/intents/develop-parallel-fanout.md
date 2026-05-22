@@ -1,17 +1,17 @@
 ---
 capability: develop-parallel-fanout
 created: '2026-05-20'
-updated: '2026-05-20'
+updated: '2026-05-21'
 version: 1
-status: active
+status: shipped
 watcher: '@ryan'
 depends_on:
-  - intent-touches-field
+- intent-touches-field
 touches:
-  - 'src/i2e_core/develop.py'
-  - 'tests/test_develop_fanout.py'
-  - '.claude/skills/i2e-develop/**'
-  - '.documentation/I2E_simplified.md'
+- src/i2e_core/develop.py
+- tests/test_develop_fanout.py
+- .claude/skills/i2e-develop/**
+- .documentation/I2E_simplified.md
 ---
 
 # i2e-develop fans out sub-agents per independent file

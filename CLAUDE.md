@@ -47,6 +47,7 @@ Never edit `dist/` by hand; never skip hooks; never force-push.
 - **Run-ids**: `runid.new_run_id()` produces `YYYY-MM-DD-<6 hex>`. Never invent your own format.
 - **No mocks in production code**. Tests use `FakeProvider` patterns; the runtime always calls real providers.
 - **Coverage gate**: 85% on `src/i2e_core/`. Anything below fails review.
+- **i2e-serve port**: static `4230` by default; override via `serve.port` in `.i2e/config.yaml`. `serve.open_browser: true` (default) opens the URL on start. Tests must pass `port=0, open_browser=False` to `start_server()` to stay ephemeral and not launch a browser.
 
 ## Boundary rules (enforced by the architecture — don't break them)
 
@@ -56,9 +57,9 @@ Never edit `dist/` by hand; never skip hooks; never force-push.
 | `i2e-develop` | `src/**`, `tests/**` |
 | `i2e-evidence` | `.i2e/evidence/**`, `.i2e/pending/**` (via async providers) |
 | `i2e-adapt` | `.i2e/pending/**`, `.i2e/logs/**`. Single intent-file carve-out: `apply_resolutions` may edit `.i2e/intents/**`. Documented at both call sites. |
-| `i2e` (orchestrator) | `.i2e/logs/**`, `.i2e/report.html`, plus whatever the dispatched skill writes |
+| `i2e` (orchestrator) | `.i2e/logs/**`, `.i2e/report.html`, the first-run `.i2e/` scaffold (layout dirs + serve/stop/restart scripts via `init_project`), plus whatever the dispatched skill writes |
 | `i2e-report` | `.i2e/report.html` only — deterministic Python, zero LLM tokens |
-| `i2e-serve` | `.i2e/.serve.url` (and only that) |
+| `i2e-serve` | nothing — advisory only (reports whether the server is up; never starts/stops it) |
 
 ## Provider contract (locked in epic 02)
 

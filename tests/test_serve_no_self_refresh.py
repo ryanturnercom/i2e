@@ -96,7 +96,7 @@ def _drain(q, deadline: float) -> list[str]:
 
 def test_single_get_root_emits_no_change_event(project: Path) -> None:
     try:
-        url = start_server(project)
+        url = start_server(project, port=0, open_browser=False)
         broker = _broker_for(project)
         # Subscribe BEFORE the GET so we'd see any event the watcher emits.
         q = broker.subscribe()
@@ -117,7 +117,7 @@ def test_single_get_root_emits_no_change_event(project: Path) -> None:
 
 def test_intent_file_write_emits_change_event(project: Path) -> None:
     try:
-        start_server(project)
+        start_server(project, port=0, open_browser=False)
         broker = _broker_for(project)
         q = broker.subscribe()
         # Give watchdog a beat to register the schedule.
@@ -141,7 +141,7 @@ def test_render_writing_report_html_emits_no_change_event(
     project: Path,
 ) -> None:
     try:
-        start_server(project)
+        start_server(project, port=0, open_browser=False)
         broker = _broker_for(project)
         q = broker.subscribe()
         time.sleep(0.2)
@@ -166,7 +166,7 @@ def test_ready_event_and_debounce_window_unchanged(project: Path) -> None:
     assert _DEBOUNCE_SECONDS == 0.2
 
     try:
-        url = start_server(project)
+        url = start_server(project, port=0, open_browser=False)
         # Connect briefly and confirm the immediate "ready" event still
         # arrives before any change activity.
         chunks: list[bytes] = []

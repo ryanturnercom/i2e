@@ -1,0 +1,24 @@
+status: resolved
+kind: human_evaluation
+capability: console-intent-and-writes
+item_id: pending-resolution-applied-by-adapt
+asked_at: '2026-05-21T20:57:46.277044Z'
+escalated_at: null
+reason: null
+expect: yes — after the next i2e tick the pending file is gone and the verdict shows
+  on the intent
+observed: null
+attempts: []
+ask: Resolve a pending in the UI (verdict + notes). Run /i2e. Does i2e-adapt apply
+  the resolution and clear the pending file as expected?
+verdict_options:
+- 'yes'
+- 'no'
+- partial
+resolution: 'yes
+
+
+  yes this is it.  im looking at it.'
+url: null
+steps: null
+screenshot: null

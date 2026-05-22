@@ -1,0 +1,131 @@
+run_id: 2026-05-21-a8060b
+capability: i2e-regression
+intent_version: 1
+collected_at: '2026-05-21T12:42:58.589778Z'
+items:
+  regression-runs-all-cases-for-shipped:
+    verdict: fail
+    value: null
+    attempts_used: 1
+    last_observed: '2026-05-21T12:42:56.911750Z'
+    pending: null
+    raw:
+      output: '
+
+        no tests ran in 0.00s
+
+        ERROR: file or directory not found: tests/test_i2e_regression.py::test_default_run_revalidates_all_shipped_capabilities
+
+        '
+  regression-respects-status-flag:
+    verdict: fail
+    value: null
+    attempts_used: 1
+    last_observed: '2026-05-21T12:42:57.105063Z'
+    pending: null
+    raw:
+      output: '
+
+        no tests ran in 0.00s
+
+        ERROR: file or directory not found: tests/test_i2e_regression.py::test_status_flag_filters_to_active_or_all
+
+        '
+  regression-respects-capability-flag:
+    verdict: fail
+    value: null
+    attempts_used: 1
+    last_observed: '2026-05-21T12:42:57.305182Z'
+    pending: null
+    raw:
+      output: '
+
+        no tests ran in 0.00s
+
+        ERROR: file or directory not found: tests/test_i2e_regression.py::test_capability_flag_scopes_to_single_slug
+
+        '
+  regression-demotes-on-case-failure:
+    verdict: fail
+    value: null
+    attempts_used: 1
+    last_observed: '2026-05-21T12:42:57.502102Z'
+    pending: null
+    raw:
+      output: '
+
+        no tests ran in 0.00s
+
+        ERROR: file or directory not found: tests/test_i2e_regression.py::test_case_failure_demotes_shipped_back_to_active
+
+        '
+  regression-skips-targets:
+    verdict: fail
+    value: null
+    attempts_used: 1
+    last_observed: '2026-05-21T12:42:57.751712Z'
+    pending: null
+    raw:
+      output: '
+
+        no tests ran in 0.00s
+
+        ERROR: file or directory not found: tests/test_i2e_regression.py::test_target_items_not_re_evaluated_by_regression
+
+        '
+  regression-writes-log-entry:
+    verdict: fail
+    value: null
+    attempts_used: 1
+    last_observed: '2026-05-21T12:42:57.966713Z'
+    pending: null
+    raw:
+      output: '
+
+        no tests ran in 0.00s
+
+        ERROR: file or directory not found: tests/test_i2e_regression.py::test_run_writes_log_under_dot_i2e_logs_regressions
+
+        '
+  spec-mentions-i2e-regression:
+    verdict: fail
+    value: null
+    attempts_used: 1
+    last_observed: '2026-05-21T12:42:58.188427Z'
+    pending: null
+    raw:
+      output: '
+
+        no tests ran in 0.00s
+
+        ERROR: file or directory not found: tests/test_i2e_regression.py::test_spec_documents_i2e_regression_in_4_1_and_appendix_b
+
+        '
+  regression-does-not-touch-targets:
+    verdict: fail
+    value: null
+    attempts_used: 1
+    last_observed: '2026-05-21T12:42:58.385476Z'
+    pending: null
+    raw:
+      output: '
+
+        no tests ran in 0.00s
+
+        ERROR: file or directory not found: tests/test_i2e_regression.py::test_target_verdicts_unchanged_by_regression
+
+        '
+  regression-does-not-modify-draft-or-retired:
+    verdict: fail
+    value: null
+    attempts_used: 1
+    last_observed: '2026-05-21T12:42:58.589778Z'
+    pending: null
+    raw:
+      output: '
+
+        no tests ran in 0.00s
+
+        ERROR: file or directory not found: tests/test_i2e_regression.py::test_draft_and_retired_capabilities_untouched
+
+        '

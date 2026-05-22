@@ -1,9 +1,9 @@
 ---
 capability: runtime-frontmatter-mirror
 created: '2026-05-20'
-updated: '2026-05-20'
+updated: '2026-05-21'
 version: 1
-status: active
+status: shipped
 watcher: '@me'
 depends_on:
 - atomic-worktree-claim

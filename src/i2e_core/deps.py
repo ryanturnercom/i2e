@@ -19,10 +19,14 @@ from .paths import intents_dir
 
 
 def build_graph(root: Path) -> dict[str, list[str]]:
-    """Return ``{slug: depends_on}`` for every active intent under ``root``.
+    """Return ``{slug: depends_on}`` for every active or shipped intent.
 
-    Drafts and retired intents are excluded — they cannot participate in the
-    ordering graph since they don't fire.
+    Drafts and retired intents are excluded — they cannot participate in
+    the ordering graph. ``shipped`` intents ARE included: a shipped
+    capability is a completed, valid ``depends_on`` target. Excluding it
+    would make a still-active child's dependency look like an unknown
+    reference the moment its parent ships (``ready_slugs`` keys ordering
+    off the active candidate set, so a shipped node never gates anything).
     """
     base = intents_dir(Path(root))
     graph: dict[str, list[str]] = {}
@@ -33,7 +37,7 @@ def build_graph(root: Path) -> dict[str, list[str]]:
             cap = parse_intent(path)
         except Exception:
             continue
-        if cap.frontmatter.status != "active":
+        if cap.frontmatter.status not in ("active", "shipped"):
             continue
         graph[cap.frontmatter.capability] = list(cap.frontmatter.depends_on)
     return graph

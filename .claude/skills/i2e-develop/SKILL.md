@@ -21,7 +21,8 @@ separation makes the loop simple to reason about.
 - Called by `i2e-adapt` to retry after an evidence failure within budget
 
 ## Boundaries
-- READ: `.i2e/intents/<cap>.md`, `.i2e/context/*`, `src/**`, `tests/**`,
+- READ: `.i2e/intents/<cap>.md`, `.i2e/specs/<slug>.md` (when the intent's
+  frontmatter has `spec:`), `.i2e/context/*`, `src/**`, `tests/**`,
   `.i2e/evidence/<cap>/current.yaml` (to see prior failure context)
 - WRITE: `src/**`, `tests/**` only
 - NEVER WRITE: anything under `.i2e/`
@@ -38,6 +39,14 @@ separation makes the loop simple to reason about.
    and `i2e_core.context.context_summary(root)` give a cheap index. Only then
    call `i2e_core.context.load_context(root)` to read the bodies (it truncates
    at a global character budget to keep the prompt bounded).
+4a. If the intent's frontmatter has `spec:` (and optionally `spec_section:`),
+   open `.i2e/specs/<spec>.md` and read it before designing the
+   implementation. The spec carries the narrative rationale, acceptance
+   criteria, and design intent that the structured Cases/Constraints alone
+   don't capture — this matters most when each capability is being fanned
+   out to a parallel sub-agent, because the sub-agent has no other channel
+   for that context. If `spec_section:` is set, prefer the matching
+   section; otherwise read the whole file.
 5. For each new/changed item, use `i2e_core.develop.suggested_src_paths(cap)`
    and `i2e_core.develop.suggested_test_paths(item)` as defaults — you are
    free to override when the codebase clearly wants something else.

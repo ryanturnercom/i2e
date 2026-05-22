@@ -1,9 +1,9 @@
 ---
 capability: fast-tick-noop
 created: '2026-05-20'
-updated: '2026-05-20'
+updated: '2026-05-21'
 version: 2
-status: active
+status: shipped
 watcher: '@ryan'
 ---
 

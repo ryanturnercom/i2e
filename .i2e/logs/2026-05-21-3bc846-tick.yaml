@@ -1,0 +1,6 @@
+tick_id: 2026-05-21-3bc846
+ran_at: '2026-05-21T13:42:10.008589Z'
+actions:
+- 'ran_develop: visual-review-pending-fields (LLM-driven; subprocess hook deferred)'
+- 'ran_evidence: visual-review-pending-fields (6 pass, 0 trending, 0 fail)'
+- 'promoted_to_shipped: visual-review-pending-fields'

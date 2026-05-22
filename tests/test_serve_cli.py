@@ -35,8 +35,21 @@ def _wait_for_url(url_file: Path, timeout: float = 10.0) -> str:
 
 
 def _start_cli(root: Path) -> subprocess.Popen:
+    # --port 0 → ephemeral OS-assigned port so concurrent / back-to-back
+    # test runs never fight for the static 4230. --no-browser keeps the
+    # suite from popping browser tabs. (CLAUDE.md: tests stay ephemeral.)
     return subprocess.Popen(
-        [sys.executable, "-m", "i2e_core.serve", "start", "--root", str(root)],
+        [
+            sys.executable,
+            "-m",
+            "i2e_core.serve",
+            "start",
+            "--root",
+            str(root),
+            "--port",
+            "0",
+            "--no-browser",
+        ],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )

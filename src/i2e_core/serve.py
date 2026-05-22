@@ -16,6 +16,7 @@ import sys
 import threading
 import time
 import urllib.request
+import webbrowser
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -25,9 +26,11 @@ from urllib.parse import urlparse
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
+from .config import load_config
+from .console.app import handle as console_handle
+from .intent_authoring import demote_intent, promote_intent, set_intent_status
 from .io_utils import atomic_write
 from .paths import i2e_dir, serve_url_path
-from .report import render, render_main_to_string
 
 
 # ---------- Internal helpers ----------
@@ -167,19 +170,15 @@ def _make_handler_class(
             self.wfile.write(data)
 
         def do_GET(self) -> None:  # noqa: N802 — stdlib name
-            path = urlparse(self.path).path
-            if path == "/" or path == "/index.html":
-                self._serve_index()
-            elif path == "/partial":
-                self._serve_partial()
-            elif path == "/events":
+            parsed = urlparse(self.path)
+            if parsed.path == "/events":
                 self._serve_events()
-            else:
-                self._write_text(HTTPStatus.NOT_FOUND, "not found", "text/plain")
+                return
+            self._delegate("GET", parsed.path, parsed.query, "")
 
         def do_POST(self) -> None:  # noqa: N802 — stdlib name
-            path = urlparse(self.path).path
-            if path == "/shutdown":
+            parsed = urlparse(self.path)
+            if parsed.path == "/shutdown":
                 self._write_text(HTTPStatus.OK, "shutting down", "text/plain")
                 # Shutdown must NOT happen on the handler thread, or the
                 # server deadlocks on its own join. Schedule it.
@@ -187,39 +186,87 @@ def _make_handler_class(
                 threading.Thread(
                     target=self.server.shutdown, daemon=True
                 ).start()
-            else:
-                self._write_text(HTTPStatus.NOT_FOUND, "not found", "text/plain")
+                return
+            if parsed.path == "/intent/status":
+                # Legacy JSON endpoint backing the static report.html
+                # status controls (capability: intent-status-controls).
+                self._serve_intent_status()
+                return
+            length = int(self.headers.get("Content-Length") or "0")
+            body = self.rfile.read(length).decode("utf-8") if length else ""
+            self._delegate("POST", parsed.path, parsed.query, body)
 
-        def _serve_index(self) -> None:
+        def _delegate(self, method: str, path: str, query: str, body: str) -> None:
+            """Hand a request to the console route table and write the response."""
+            cookie = self.headers.get("Cookie")
             try:
-                report_file = render(root)
-                html = Path(report_file).read_text(encoding="utf-8")
-            except Exception as e:
+                resp = console_handle(root, method, path, query, body, cookie)
+            except Exception as exc:  # never crash the serve thread
                 self._write_text(
                     HTTPStatus.INTERNAL_SERVER_ERROR,
-                    f"render failed: {e}",
+                    f"console error: {exc}",
                     "text/plain",
                 )
                 return
-            self._write_text(HTTPStatus.OK, html, "text/html; charset=utf-8")
+            data = resp.body
+            self.send_response(resp.status)
+            self.send_header("Content-Type", resp.content_type)
+            self.send_header("Content-Length", str(len(data)))
+            for key, value in resp.headers.items():
+                self.send_header(key, value)
+            if "Cache-Control" not in resp.headers:
+                self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(data)
 
-        def _serve_partial(self) -> None:
-            """Render just the dynamic ``<main>`` body for AJAX swap-in updates.
-
-            The client listens to SSE ``change`` events and replaces
-            ``document.querySelector('main').innerHTML`` with this response,
-            which preserves scroll position and any in-page interaction state.
-            """
+        def _serve_intent_status(self) -> None:
             try:
-                html = render_main_to_string(root)
+                length = int(self.headers.get("Content-Length") or "0")
+                body = self.rfile.read(length).decode("utf-8") if length else ""
+                payload = json.loads(body) if body else {}
             except Exception as e:
                 self._write_text(
-                    HTTPStatus.INTERNAL_SERVER_ERROR,
-                    f"render failed: {e}",
-                    "text/plain",
+                    HTTPStatus.BAD_REQUEST,
+                    json.dumps({"error": f"invalid json: {e}"}),
+                    "application/json",
                 )
                 return
-            self._write_text(HTTPStatus.OK, html, "text/html; charset=utf-8")
+            slug = payload.get("slug")
+            action = payload.get("action")
+            if not isinstance(slug, str) or not slug:
+                self._write_text(
+                    HTTPStatus.BAD_REQUEST,
+                    json.dumps({"error": "missing slug"}),
+                    "application/json",
+                )
+                return
+            try:
+                if action == "promote":
+                    old, new = promote_intent(root, slug)
+                elif action == "demote":
+                    old, new = demote_intent(root, slug)
+                elif action == "set":
+                    target = payload.get("status")
+                    if not isinstance(target, str):
+                        raise ValueError("missing 'status' for set action")
+                    set_intent_status(root, slug, target)  # type: ignore[arg-type]
+                    old, new = "?", target
+                else:
+                    raise ValueError(
+                        f"unknown action {action!r} (use promote|demote|set)"
+                    )
+            except (FileNotFoundError, ValueError) as e:
+                self._write_text(
+                    HTTPStatus.BAD_REQUEST,
+                    json.dumps({"error": str(e)}),
+                    "application/json",
+                )
+                return
+            self._write_text(
+                HTTPStatus.OK,
+                json.dumps({"slug": slug, "old": old, "new": new}),
+                "application/json",
+            )
 
         def _serve_events(self) -> None:
             self.send_response(HTTPStatus.OK)
@@ -289,11 +336,20 @@ _HANDLES_LOCK = threading.Lock()
 # ---------- Public API ----------
 
 
-def start_server(root: Path, host: str = "127.0.0.1") -> str:
+def start_server(
+    root: Path,
+    host: str = "127.0.0.1",
+    *,
+    port: int | None = None,
+    open_browser: bool | None = None,
+) -> str:
     """Start the localhost server. Returns the URL.
 
     Refuses any host other than ``127.0.0.1`` (raises :class:`ValueError`).
     Writes ``.i2e/.serve.url`` while the server is up.
+
+    ``port`` and ``open_browser`` fall back to ``.i2e/config.yaml`` when
+    ``None``. Pass ``port=0`` for an ephemeral OS-assigned port (tests).
     """
     if host != "127.0.0.1":
         raise ValueError(
@@ -303,13 +359,20 @@ def start_server(root: Path, host: str = "127.0.0.1") -> str:
     ldir = i2e_dir(root)
     ldir.mkdir(parents=True, exist_ok=True)
 
+    if port is None or open_browser is None:
+        cfg = load_config(root)
+        if port is None:
+            port = cfg.serve.port
+        if open_browser is None:
+            open_browser = cfg.serve.open_browser
+
     broker = _ChangeBroker()
     shutdown_event = threading.Event()
     handler_cls = _make_handler_class(root, broker, shutdown_event)
 
-    server = ThreadingHTTPServer((host, 0), handler_cls)
-    port = server.server_address[1]
-    url = f"http://{host}:{port}/"
+    server = ThreadingHTTPServer((host, port), handler_cls)
+    bound_port = server.server_address[1]
+    url = f"http://{host}:{bound_port}/"
 
     url_file = serve_url_path(root)
     atomic_write(url_file, url)
@@ -340,7 +403,29 @@ def start_server(root: Path, host: str = "127.0.0.1") -> str:
     handle = _ServerHandle(server, thread, observer, broker, url, url_file)
     with _HANDLES_LOCK:
         _HANDLES[str(root)] = handle
+
+    if open_browser:
+        _open_browser_async(url)
+
     return url
+
+
+def _open_browser_async(url: str) -> None:
+    """Fire ``webbrowser.open`` from a background thread after a brief delay.
+
+    The delay gives the serve thread time to accept connections, so the
+    first GET from the browser doesn't race the bind. Failures are
+    swallowed — we never want a missing browser to crash the server.
+    """
+
+    def _go() -> None:
+        try:
+            time.sleep(0.15)
+            webbrowser.open(url)
+        except Exception:
+            pass
+
+    threading.Thread(target=_go, name="i2e-serve-browser", daemon=True).start()
 
 
 def _stop_in_process(root: Path) -> bool:
@@ -425,11 +510,36 @@ def _main(argv: list[str] | None = None) -> int:
         help="Project root (containing .i2e/). Defaults to cwd.",
     )
     parser.add_argument("--host", default="127.0.0.1")
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=None,
+        help="Bind to this port (default: serve.port from .i2e/config.yaml).",
+    )
+    browser_group = parser.add_mutually_exclusive_group()
+    browser_group.add_argument(
+        "--open-browser",
+        dest="open_browser",
+        action="store_true",
+        default=None,
+        help="Open the served URL in the default browser (overrides config).",
+    )
+    browser_group.add_argument(
+        "--no-browser",
+        dest="open_browser",
+        action="store_false",
+        help="Do not open the browser (overrides config).",
+    )
     args = parser.parse_args(argv)
 
     root = Path(args.root)
     if args.command == "start":
-        url = start_server(root, host=args.host)
+        url = start_server(
+            root,
+            host=args.host,
+            port=args.port,
+            open_browser=args.open_browser,
+        )
         print(json.dumps({"url": url}), flush=True)
         # The serve thread is a daemon — if we return here, the process exits
         # and the server dies with it. Block on the thread's join() so the CLI

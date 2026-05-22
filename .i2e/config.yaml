@@ -21,3 +21,7 @@ defaults:
 scheduler:                         # advisory only
   cadence: weekly
   via: claude-code-routine         # or windows-task-scheduler | launchd | cron | manual
+
+serve:                             # i2e-serve localhost server
+  port: 4230                       # static port; pick any free TCP port
+  open_browser: true               # open the URL in the default browser on start

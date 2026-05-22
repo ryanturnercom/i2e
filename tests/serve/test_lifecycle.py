@@ -20,12 +20,12 @@ def _http_get(url: str, timeout: float = 3.0):
 
 def test_refuses_non_loopback_host(project: Path) -> None:
     with pytest.raises(ValueError):
-        start_server(project, host="0.0.0.0")
+        start_server(project, host="0.0.0.0", port=0, open_browser=False)
 
 
 def test_start_returns_loopback_url_and_writes_serve_file(project: Path) -> None:
     try:
-        url = start_server(project)
+        url = start_server(project, port=0, open_browser=False)
         assert url.startswith("http://127.0.0.1:")
         parsed = urlparse(url)
         assert parsed.hostname == "127.0.0.1"
@@ -38,12 +38,15 @@ def test_start_returns_loopback_url_and_writes_serve_file(project: Path) -> None
 
 def test_get_root_returns_html_with_capabilities(project: Path) -> None:
     try:
-        url = start_server(project)
+        url = start_server(project, port=0, open_browser=False)
         with _http_get(url) as resp:
             assert resp.status == 200
             body = resp.read().decode("utf-8")
-        assert "<!DOCTYPE html>" in body
-        assert 'id="cap/alpha"' in body
+        # GET / now serves the i2e Console dashboard (replacing the static
+        # report.html). The active capability surfaces in a card + sidebar.
+        assert "<!doctype html>" in body.lower()
+        assert "i2e console" in body.lower()
+        assert "alpha" in body
     finally:
         stop_server(project)
 
@@ -51,7 +54,7 @@ def test_get_root_returns_html_with_capabilities(project: Path) -> None:
 def test_events_endpoint_sends_sse_on_filesystem_change(project: Path) -> None:
     """Modify a file under ``.i2e/``; the SSE client should see a change event."""
     try:
-        url = start_server(project)
+        url = start_server(project, port=0, open_browser=False)
         # Connect to /events with a generous read timeout.
         with urllib.request.urlopen(url + "events", timeout=3.0) as resp:
             assert resp.headers.get("Content-Type", "").startswith(
@@ -87,7 +90,7 @@ def test_events_endpoint_sends_sse_on_filesystem_change(project: Path) -> None:
 
 
 def test_stop_removes_serve_url_file(project: Path) -> None:
-    start_server(project)
+    start_server(project, port=0, open_browser=False)
     assert serve_url_path(project).exists()
     stop_server(project)
     assert not serve_url_path(project).exists()
@@ -101,7 +104,7 @@ def test_stop_is_idempotent_when_not_running(project: Path) -> None:
 
 def test_get_unknown_path_returns_404(project: Path) -> None:
     try:
-        url = start_server(project)
+        url = start_server(project, port=0, open_browser=False)
         try:
             _http_get(url + "does-not-exist")
         except urllib.error.HTTPError as e:
@@ -114,7 +117,7 @@ def test_get_unknown_path_returns_404(project: Path) -> None:
 
 def test_post_shutdown_endpoint(project: Path) -> None:
     """Posting /shutdown should make the server stop on its own."""
-    url = start_server(project)
+    url = start_server(project, port=0, open_browser=False)
     req = urllib.request.Request(url + "shutdown", method="POST")
     with urllib.request.urlopen(req, timeout=2.0) as resp:
         assert resp.status == 200
@@ -127,7 +130,7 @@ def test_post_shutdown_endpoint(project: Path) -> None:
 
 def test_post_unknown_path_returns_404(project: Path) -> None:
     try:
-        url = start_server(project)
+        url = start_server(project, port=0, open_browser=False)
         req = urllib.request.Request(url + "no-such-endpoint", method="POST")
         try:
             urllib.request.urlopen(req, timeout=2.0)
@@ -145,7 +148,7 @@ def test_stop_via_http_when_handle_missing(project: Path, monkeypatch) -> None:
     When the in-process handle is missing (e.g. a different process started
     the server), ``stop_server`` reads ``.serve.url`` and POSTs ``/shutdown``.
     """
-    url = start_server(project)
+    url = start_server(project, port=0, open_browser=False)
     # Forcibly drop the in-process handle so stop_server takes the HTTP path.
     from i2e_core import serve as serve_mod
     with serve_mod._HANDLES_LOCK:

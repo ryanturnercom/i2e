@@ -1,9 +1,9 @@
 ---
 capability: intent-depends-on-field
 created: '2026-05-20'
-updated: '2026-05-20'
+updated: '2026-05-21'
 version: 1
-status: active
+status: shipped
 watcher: '@ryan'
 ---
 

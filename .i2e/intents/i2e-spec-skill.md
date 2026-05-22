@@ -1,19 +1,19 @@
 ---
 capability: i2e-spec-skill
 created: '2026-05-20'
-updated: '2026-05-20'
+updated: '2026-05-21'
 version: 1
-status: active
+status: shipped
 watcher: '@ryan'
 depends_on:
-  - intent-depends-on-field
-  - intent-touches-field
+- intent-depends-on-field
+- intent-touches-field
 touches:
-  - 'src/i2e_core/spec.py'
-  - 'tests/test_i2e_spec.py'
-  - 'tests/fixtures/specs/**'
-  - '.claude/skills/i2e-spec/**'
-  - '.documentation/I2E_simplified.md'
+- src/i2e_core/spec.py
+- tests/test_i2e_spec.py
+- tests/fixtures/specs/**
+- .claude/skills/i2e-spec/**
+- .documentation/I2E_simplified.md
 ---
 
 # `i2e-spec` skill - PRD/spec to many intents

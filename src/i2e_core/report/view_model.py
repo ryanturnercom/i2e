@@ -30,6 +30,7 @@ from ..paths import (
     serve_url_path,
 )
 from ..pending import PendingFile, list_open_pending, read_pending
+from ..swarm import Claim, is_pid_alive, read_claim, worktrees_root
 from ..tick_log import TickLog, _read_tick
 
 
@@ -37,6 +38,13 @@ from ..tick_log import TickLog, _read_tick
 
 
 _GREEN_VERDICTS = frozenset({"pass", "met"})
+_FAILURE_VERDICTS = frozenset({"fail", "unmet"})
+_NOTIFICATION_KIND_ORDER = {
+    "failure": 0,
+    "pending": 1,
+    "trending": 2,
+    "intervention": 3,
+}
 
 _VERDICT_LABEL = {
     "pass": "pass",
@@ -63,6 +71,8 @@ class ItemView(BaseModel):
     id: str
     type: str
     provider: str
+    query: str = ""
+    expect: str = ""
     verdict: str
     verdict_label: str
     verdict_class: str
@@ -102,6 +112,56 @@ class PendingView(BaseModel):
     resolution_template: str = ""
 
 
+class InFlightView(BaseModel):
+    """One active worktree claim — the live row in the in-flight panel."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    slug: str
+    step: str
+    agent_id: str
+    session_id: str | None = None
+    tick_id: str
+    started_at: str
+    progress: str = ""
+    alive: bool = True
+
+
+class NotificationView(BaseModel):
+    """One row in the watcher notifications surface.
+
+    ``kind`` is the high-level category — ``failure`` (verdict=fail/unmet),
+    ``trending`` (verdict=trending, not yet failing but slipping),
+    ``pending`` (an open pending file awaiting the watcher), or
+    ``intervention`` (a target verdict signalling human intervention is
+    needed). The ``href`` is a fragment that scrolls to the source so the
+    watcher can act in one click.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    kind: str
+    watcher: str
+    capability: str
+    item_id: str
+    message: str
+    href: str
+
+
+class ParallelismView(BaseModel):
+    """Roll-up of how many agents are running in parallel right now."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    parallel_count: int = 0
+    distinct_agents: int = 0
+    by_step: dict[str, int] = Field(default_factory=dict)
+
+    @property
+    def by_step_sorted(self) -> list[tuple[str, int]]:
+        return sorted(self.by_step.items())
+
+
 class TickView(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -120,6 +180,10 @@ class ReportViewModel(BaseModel):
     shippable: bool
     capabilities: list[CapabilityView] = Field(default_factory=list)
     drafts: list[CapabilityView] = Field(default_factory=list)
+    shipped: list[CapabilityView] = Field(default_factory=list)
+    in_flight: list[InFlightView] = Field(default_factory=list)
+    parallelism: ParallelismView = Field(default_factory=ParallelismView)
+    notifications: list[NotificationView] = Field(default_factory=list)
     pending: list[PendingView] = Field(default_factory=list)
     ticks: list[TickView] = Field(default_factory=list)
     serve_url: str | None = None
@@ -172,6 +236,10 @@ def _list_draft_capabilities(root: Path) -> list[Capability]:
     return _list_capabilities_by_status(root, "draft")
 
 
+def _list_shipped_capabilities(root: Path) -> list[Capability]:
+    return _list_capabilities_by_status(root, "shipped")
+
+
 def _build_item_view(
     item_id: str,
     item_type: str,
@@ -179,6 +247,8 @@ def _build_item_view(
     effort: str,
     cfg: I2EConfig,
     verdict: ItemVerdict | None,
+    query: str = "",
+    expect: str = "",
 ) -> ItemView:
     try:
         max_attempts = resolve_max_attempts(cfg, item_type, effort)  # type: ignore[arg-type]
@@ -190,6 +260,8 @@ def _build_item_view(
             id=item_id,
             type=item_type,
             provider=provider,
+            query=query,
+            expect=expect,
             verdict="none",
             verdict_label="no data",
             verdict_class="none",
@@ -204,6 +276,8 @@ def _build_item_view(
         id=item_id,
         type=item_type,
         provider=provider,
+        query=query,
+        expect=expect,
         verdict=verdict.verdict,
         verdict_label=_VERDICT_LABEL.get(verdict.verdict, verdict.verdict),
         verdict_class=_VERDICT_CLASS.get(verdict.verdict, "none"),
@@ -222,17 +296,24 @@ def _build_capability_view(
     current_items: dict[str, ItemVerdict] = cur.items if cur else {}
 
     # Combine evidence + constraints, sorted by id.
-    spec_items: list[tuple[str, str, str, str]] = []  # (id, type, provider, effort)
+    spec_items: list[tuple[str, str, str, str, str, str]] = []
     for ev in cap.evidence:
-        spec_items.append((ev.id, ev.type, ev.provider, ev.effort))
+        spec_items.append(
+            (ev.id, ev.type, ev.provider, ev.effort, ev.query, ev.expect)
+        )
     for cn in cap.constraints:
-        spec_items.append((cn.id, "constraint", cn.provider, cn.effort))
+        spec_items.append(
+            (cn.id, "constraint", cn.provider, cn.effort, cn.query, cn.expect)
+        )
     spec_items.sort(key=lambda t: t[0])
 
-    for item_id, item_type, provider, effort in spec_items:
+    for item_id, item_type, provider, effort, query, expect in spec_items:
         verdict = current_items.get(item_id)
         items.append(
-            _build_item_view(item_id, item_type, provider, effort, cfg, verdict)
+            _build_item_view(
+                item_id, item_type, provider, effort, cfg, verdict,
+                query=query, expect=expect,
+            )
         )
 
     # Summary by verdict label.
@@ -278,6 +359,117 @@ def _build_pending_view(path: Path) -> PendingView | None:
         status=pf.status,
         resolution_template=_resolution_template(pf),
     )
+
+
+def _build_notifications(
+    capabilities: list[CapabilityView],
+    pending_views: list[PendingView],
+    raw_caps: list[Capability],
+) -> list[NotificationView]:
+    """Roll up everything that needs a watcher's attention.
+
+    The watcher must land on the page and immediately see "what needs me?" —
+    so we surface failures, trending items, pending asks, and target
+    interventions in one place, sorted by severity then by watcher.
+    """
+    watcher_by_slug = {c.frontmatter.capability: c.frontmatter.watcher for c in raw_caps}
+    out: list[NotificationView] = []
+    for cap in capabilities:
+        watcher = watcher_by_slug.get(cap.slug, cap.watcher)
+        for item in cap.items:
+            if item.verdict in _FAILURE_VERDICTS:
+                kind = "failure"
+                msg = (
+                    f"{item.type} {item.id} is {item.verdict_label}"
+                    + (f" ({item.value})" if item.value else "")
+                )
+                out.append(
+                    NotificationView(
+                        kind=kind,
+                        watcher=watcher,
+                        capability=cap.slug,
+                        item_id=item.id,
+                        message=msg,
+                        href=f"#item/{cap.slug}/{item.id}",
+                    )
+                )
+            elif item.verdict == "trending":
+                out.append(
+                    NotificationView(
+                        kind="trending",
+                        watcher=watcher,
+                        capability=cap.slug,
+                        item_id=item.id,
+                        message=f"target {item.id} is trending — heading toward unmet",
+                        href=f"#item/{cap.slug}/{item.id}",
+                    )
+                )
+            elif item.verdict == "awaiting_human" and item.type == "target":
+                out.append(
+                    NotificationView(
+                        kind="intervention",
+                        watcher=watcher,
+                        capability=cap.slug,
+                        item_id=item.id,
+                        message=f"target {item.id} needs human intervention",
+                        href=f"#item/{cap.slug}/{item.id}",
+                    )
+                )
+    for p in pending_views:
+        watcher = watcher_by_slug.get(p.capability, "@me")
+        out.append(
+            NotificationView(
+                kind="pending",
+                watcher=watcher,
+                capability=p.capability,
+                item_id=p.item_id,
+                message=f"awaiting human: {p.ask}",
+                href=f"#pending/{p.filename}",
+            )
+        )
+    out.sort(
+        key=lambda n: (
+            _NOTIFICATION_KIND_ORDER.get(n.kind, 99),
+            n.watcher,
+            n.capability,
+            n.item_id,
+        )
+    )
+    return out
+
+
+def _list_in_flight(root: Path) -> list[InFlightView]:
+    """Read every live worktree claim under ``.i2e/worktrees/``.
+
+    A worktree directory without a parsable ``claim.json`` is skipped (it's
+    in the process of being acquired or released). Claims whose pid is not
+    alive are still surfaced but flagged ``alive=False`` so the operator
+    can see something is stuck.
+    """
+    base = worktrees_root(Path(root))
+    if not base.exists():
+        return []
+    out: list[InFlightView] = []
+    for sub in sorted(base.iterdir()):
+        if not sub.is_dir():
+            continue
+        claim = read_claim(root, sub.name)
+        if claim is None:
+            continue
+        out.append(
+            InFlightView(
+                slug=claim.slug,
+                step=claim.step,
+                agent_id=claim.agent_id,
+                session_id=claim.session_id,
+                tick_id=claim.tick_id,
+                started_at=_format_dt(claim.started_at) or "",
+                progress=claim.progress,
+                alive=is_pid_alive(claim.pid),
+            )
+        )
+    out.sort(key=lambda v: (v.slug, v.started_at))
+    return out
 
 
 def _list_recent_ticks(root: Path, n: int = 10) -> list[tuple[Path, TickLog]]:
@@ -336,12 +528,36 @@ def build_view_model(root: Path) -> ReportViewModel:
         cur = read_current(root, cap.frontmatter.capability)
         drafts.append(_build_capability_view(cap, cur, cfg))
 
+    shipped_raw = _list_shipped_capabilities(root)
+    shipped: list[CapabilityView] = []
+    for cap in shipped_raw:
+        cur = read_current(root, cap.frontmatter.capability)
+        shipped.append(_build_capability_view(cap, cur, cfg))
+
+    in_flight = _list_in_flight(root)
+    by_step: dict[str, int] = {}
+    agents: set[str] = set()
+    for row in in_flight:
+        if not row.alive:
+            # Stale claims don't count toward live parallelism. They are still
+            # rendered in the table so the operator notices them.
+            continue
+        by_step[row.step] = by_step.get(row.step, 0) + 1
+        agents.add(row.agent_id)
+    parallelism = ParallelismView(
+        parallel_count=sum(by_step.values()),
+        distinct_agents=len(agents),
+        by_step=by_step,
+    )
+
     pending_views: list[PendingView] = []
     for path in list_open_pending(root):
         pv = _build_pending_view(path)
         if pv is not None:
             pending_views.append(pv)
     pending_views.sort(key=lambda p: p.filename)
+
+    notifications = _build_notifications(capabilities, pending_views, caps_raw)
 
     ticks_raw = _list_recent_ticks(root, n=10)
     ticks = [_build_tick_view(tl) for _, tl in ticks_raw]
@@ -365,6 +581,10 @@ def build_view_model(root: Path) -> ReportViewModel:
         shippable=shippable,
         capabilities=capabilities,
         drafts=drafts,
+        shipped=shipped,
+        in_flight=in_flight,
+        parallelism=parallelism,
+        notifications=notifications,
         pending=pending_views,
         ticks=ticks,
         serve_url=_read_serve_url(root),
@@ -397,6 +617,10 @@ def _render_template(template_name: str, vm: ReportViewModel) -> str:
         shippable=vm.shippable,
         capabilities=vm.capabilities,
         drafts=vm.drafts,
+        shipped=vm.shipped,
+        in_flight=vm.in_flight,
+        parallelism=vm.parallelism,
+        notifications=vm.notifications,
         pending=vm.pending,
         ticks=vm.ticks,
         serve_url=vm.serve_url,
@@ -432,7 +656,10 @@ def render(root: Path) -> Path:
 
 __all__ = [
     "CapabilityView",
+    "InFlightView",
     "ItemView",
+    "NotificationView",
+    "ParallelismView",
     "PendingView",
     "ReportViewModel",
     "TickView",

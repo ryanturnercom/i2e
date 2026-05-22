@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <title>{{ project_name }} — i2e report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rock+Salt&display=swap">
 <style>
   :root {
     --bg: #f7f7f8;
@@ -48,6 +51,14 @@
     margin: 0;
     font-size: 18px;
     font-weight: 600;
+  }
+  header.banner h1 .logo {
+    font-family: "Rock Salt", cursive;
+    font-weight: 400;
+    font-size: 20px;
+    letter-spacing: 0;
+    color: var(--text);
+    margin-right: 4px;
   }
   .banner-meta { color: var(--muted); font-size: 12px; }
   .served-by { color: var(--muted); font-size: 12px; }
@@ -99,9 +110,8 @@
     padding: 10px 12px;
     background: #fbfbfc;
     display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    align-items: center;
+    flex-direction: column;
+    gap: 4px;
   }
   .item .id { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 600; }
   .item .type { color: var(--muted); font-size: 12px; }
@@ -113,6 +123,122 @@
   .item .meta { color: var(--muted); font-size: 12px; margin-left: auto; }
   .cap-meta { color: var(--muted); font-size: 12px; margin-bottom: 4px; }
   .summary-line { color: var(--muted); font-size: 12px; margin-top: 6px; }
+  .status-controls { display: flex; gap: 8px; margin: 8px 0 4px 0; }
+  .status-btn {
+    background: #272727;
+    color: #ffffff;
+    border: 0;
+    border-radius: 6px;
+    padding: 6px 12px 5px 12px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .status-btn:hover:not(:disabled) { background: #3a3a3a; }
+  .status-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .status-btn.demote { background: transparent; color: #272727; border: 1px solid #272727; }
+  .status-btn.demote:hover:not(:disabled) { background: #272727; color: #ffffff; }
+  details.case-details { margin-top: 8px; }
+  details.case-details > summary {
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--muted);
+    user-select: none;
+    padding: 4px 0;
+  }
+  details.case-details > summary:hover { color: var(--text); }
+  details.case-details[open] > summary { color: var(--text); font-weight: 600; }
+  .item-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .item-query, .item-expect, .item-value {
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .item-query code, .item-expect code, .item-value code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    background: #f5f5f5;
+    padding: 1px 6px;
+    border-radius: 4px;
+    color: var(--text);
+  }
+  .kv-label {
+    display: inline-block;
+    min-width: 72px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .live-panel { padding: 16px 18px; }
+  .live-empty { color: var(--muted); font-size: 13px; }
+  .live-summary { display: flex; gap: 24px; margin-bottom: 10px; }
+  .live-count { color: var(--muted); font-size: 12px; }
+  .live-count strong { color: var(--text); font-size: 16px; padding-right: 4px; }
+  table.live-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  table.live-table th, table.live-table td {
+    text-align: left;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  table.live-table th {
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 10px;
+    font-weight: 600;
+  }
+  table.live-table td.live-agent {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  table.live-table td.live-started {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  tr.live-row.stale { opacity: 0.55; }
+  .stale-tag {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: var(--pill-fail-bg);
+    color: var(--pill-fail-fg);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .parallelism-by-step {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .step-pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    background: var(--pill-awaiting-bg);
+    color: var(--pill-awaiting-fg);
+  }
+  .step-pill.step-develop { background: var(--pill-trending-bg); color: var(--pill-trending-fg); }
+  .step-pill.step-evidence { background: var(--pill-pass-bg); color: var(--pill-pass-fg); }
+  .step-pill.step-adapt { background: var(--pill-unmet-bg); color: var(--pill-unmet-fg); }
   section.draft {
     border-style: dashed;
     background: #fafafa;
@@ -166,6 +292,192 @@
     100% { box-shadow: inset 0 0 0 2px transparent; }
   }
   main.refreshed { animation: mainPulse 0.6s ease-out; }
+  section.notifications {
+    margin: 16px 0;
+    padding: 14px 16px;
+    background: #fff7ed;
+    border: 1px solid #fdba74;
+    border-radius: 8px;
+  }
+  .notifications-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .notifications-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #7c2d12;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+  .notifications-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 22px;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: #c2410c;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  ul.notifications-list { list-style: none; padding: 0; margin: 0; }
+  li.notification {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 6px 0;
+  }
+  li.notification + li.notification { border-top: 1px solid #fed7aa; }
+  li.notification-watcher-divider {
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px dashed #fdba74;
+    color: #9a3412;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+  li.notification-watcher-divider:first-child {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+  }
+  .notification-kind {
+    display: inline-flex;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    min-width: 70px;
+    justify-content: center;
+  }
+  .notification-kind.kind-failure { background: var(--pill-fail-bg); color: var(--pill-fail-fg); }
+  .notification-kind.kind-trending { background: var(--pill-trending-bg); color: var(--pill-trending-fg); }
+  .notification-kind.kind-pending { background: var(--pill-awaiting-bg); color: var(--pill-awaiting-fg); }
+  .notification-kind.kind-intervention { background: var(--pill-unmet-bg); color: var(--pill-unmet-fg); }
+  a.notification-link {
+    color: inherit;
+    text-decoration: none;
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    flex: 1;
+  }
+  a.notification-link:hover { text-decoration: underline; }
+  .notification-cap {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: #7c2d12;
+  }
+  .notification-message { font-size: 13px; color: #9a3412; }
+  nav.idea-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 16px 24px;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .idea-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px 5px 12px;
+    border-radius: 6px;
+    background: #f5f5f5;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border: 1px solid var(--border);
+  }
+  .idea-chip:hover { background: #272727; color: #ffffff; border-color: #272727; }
+  .idea-letter {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    background: #272727;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+  .idea-chip:hover .idea-letter { background: #ffffff; color: #272727; }
+  .idea-name { letter-spacing: 1px; }
+  .idea-arrow { color: var(--muted); font-size: 14px; }
+  section.idea-stage {
+    padding: 16px 0 8px 0;
+    margin-bottom: 12px;
+    scroll-margin-top: 80px;
+  }
+  h2.idea-heading {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 16px 0 12px 0;
+    color: var(--text);
+  }
+  .idea-letter-inline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 999px;
+    background: #272727;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .idea-tagline { color: var(--muted); font-size: 13px; font-weight: 400; }
+  h3.idea-subheading {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin: 18px 0 8px 0;
+    font-weight: 600;
+  }
+  .evidence-roll { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+  .evidence-roll .pill { font-size: 11px; }
+  .evidence-hint { color: var(--muted); font-size: 12px; }
+  footer.report-footer {
+    margin-top: 24px;
+    padding: 16px 24px 32px 24px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    border-top: 1px solid var(--border);
+  }
+  footer.report-footer a {
+    color: var(--text);
+    text-decoration: none;
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+  footer.report-footer a:hover { text-decoration: underline; }
   @media (max-width: 600px) {
     main { padding: 12px; }
     header.banner { padding: 12px; }
@@ -175,7 +487,7 @@
 <body>
 <header class="banner">
   <div>
-    <h1>{{ project_name }} <span class="banner-meta">— i2e report</span></h1>
+    <h1><span class="logo">i2e</span> <span class="banner-meta">— {{ project_name }} report</span></h1>
     <div class="banner-meta">
       Generated at {{ generated_at_display }}{% if last_tick_id %} · last tick {{ last_tick_id }}{% endif %}
       <span id="live-stamp" class="live-stamp" title="Live update received from i2e-serve"></span>
@@ -193,6 +505,9 @@
   </div>
 </header>
 <main>{% include 'report_main.html.j2' %}</main>
+<footer class="report-footer">
+  <a href="https://ryanturner.com" target="_blank" rel="noopener">ryanturner.com</a>
+</footer>
 <script>
 // Live updates via SSE — works only when served by i2e-serve. Fails silently for file://.
 // On change, fetch /partial and swap <main>'s innerHTML so scroll position and
@@ -242,6 +557,30 @@
     });
     src.onerror = function() { /* server unavailable; ignore */ };
   } catch (e) { /* file:// scheme will SecurityError — silent */ }
+
+  // Promote / Demote controls. Event-delegated so the buttons keep working
+  // after /partial swaps replace the <main> body in place.
+  document.addEventListener('click', function(ev) {
+    var btn = ev.target.closest && ev.target.closest('.status-btn');
+    if (!btn || btn.disabled) return;
+    var holder = btn.closest('.status-controls');
+    if (!holder) return;
+    var slug = holder.getAttribute('data-slug');
+    var action = btn.getAttribute('data-action');
+    if (!slug || !action) return;
+    btn.disabled = true;
+    fetch('/intent/status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slug: slug, action: action })
+    }).then(function(r) {
+      if (!r.ok) return r.text().then(function(t) { throw new Error(t); });
+      // The file watcher will fire a change SSE which triggers refreshMain.
+    }).catch(function(err) {
+      btn.disabled = false;
+      alert('status change failed: ' + (err && err.message ? err.message : err));
+    });
+  });
 })();
 </script>
 </body>

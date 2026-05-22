@@ -1,0 +1,5 @@
+tick_id: 2026-05-20-39a6d4
+ran_at: '2026-05-20T18:49:13.857287Z'
+actions:
+- 'develop: intent v1 (first develop); new=1 changed=0 removed=0; files_touched=4'
+- 'evidence: capability-case-details-on-click pass=1 fail=0 awaiting=0'

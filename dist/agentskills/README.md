@@ -19,6 +19,7 @@ OpenCode, OpenHands, Codex, and others. See
 - `i2e-provider-pytest` — see `i2e-provider-pytest/SKILL.md`
 - `i2e-provider-sentry` — see `i2e-provider-sentry/SKILL.md`
 - `i2e-provider-survey` — see `i2e-provider-survey/SKILL.md`
+- `i2e-regression` — see `i2e-regression/SKILL.md`
 - `i2e-report` — see `i2e-report/SKILL.md`
 - `i2e-serve` — see `i2e-serve/SKILL.md`
 - `i2e-spec` — see `i2e-spec/SKILL.md`

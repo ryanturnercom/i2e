@@ -16,7 +16,7 @@ capability: {name}
 created: 2026-05-19
 updated: 2026-05-19
 version: 1
-status: active
+status: {status}
 watcher: '@me'
 {deps_block}---
 
@@ -50,10 +50,17 @@ def project(tmp_path: Path) -> Path:
     return tmp_path
 
 
-def _write(project: Path, name: str, deps: list[str] | None = None) -> Path:
+def _write(
+    project: Path,
+    name: str,
+    deps: list[str] | None = None,
+    status: str = "active",
+) -> Path:
     p = project / ".i2e" / "intents" / f"{name}.md"
     p.write_text(
-        _INTENT_TEMPLATE.format(name=name, deps_block=_deps_block(deps or [])),
+        _INTENT_TEMPLATE.format(
+            name=name, status=status, deps_block=_deps_block(deps or [])
+        ),
         encoding="utf-8",
     )
     return p
@@ -114,6 +121,16 @@ def test_preflight_rejects_unknown_dependency(project: Path) -> None:
     assert result.valid is False
     msgs = [m for errs in result.errors.values() for m in errs]
     assert any("ghost" in m and "unknown" in m for m in msgs)
+
+
+def test_preflight_accepts_shipped_dependency(project: Path) -> None:
+    # A still-active child may depend on a parent that has already shipped.
+    # Shipping a dependency must never make the child's depends_on look like
+    # an unknown reference.
+    _write(project, "parent", status="shipped")
+    _write(project, "child", deps=["parent"], status="active")
+    result = preflight(project)
+    assert result.valid is True, result.errors
 
 
 def test_spec_documents_depends_on_field() -> None:

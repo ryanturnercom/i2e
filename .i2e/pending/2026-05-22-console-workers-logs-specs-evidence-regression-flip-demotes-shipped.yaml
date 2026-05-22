@@ -1,0 +1,22 @@
+status: open
+kind: human_evaluation
+capability: console-workers-logs-specs-evidence
+item_id: regression-flip-demotes-shipped
+asked_at: '2026-05-22T00:38:39.585895Z'
+escalated_at: null
+reason: null
+expect: yes — toast shows live stdout, final tick lands in Logs, capability status
+  flips shipped→active
+observed: null
+attempts: []
+ask: Run regression on a shipped capability where one of its cases now fails. Does
+  the toast show streaming progress, and does the capability get demoted to active
+  when it completes?
+verdict_options:
+- 'yes'
+- 'no'
+- partial
+resolution: null
+url: null
+steps: null
+screenshot: null

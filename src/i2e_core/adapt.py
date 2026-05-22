@@ -50,6 +50,7 @@ from .pending import (
     list_resolved_pending,
     pending_filename,
     read_pending,
+    resolve_to_verdict,
     write_pending,
 )
 from .tick_log import changes_since
@@ -535,6 +536,40 @@ def _apply_accept(
     return False
 
 
+def _apply_human_resolution(
+    root: Path, pf: PendingFile, pending_path: Path
+) -> ResolutionApplied:
+    """Apply a resolved ``human_evaluation`` pending.
+
+    Human resolutions carry a yes/no/partial (or numeric survey) verdict,
+    not an escalation choice. :func:`resolve_to_verdict` translates it; the
+    resulting verdict replaces the item's record in ``current.yaml`` and
+    the pending file is archived. ``choice`` is ``0`` — there is no 1-4
+    escalation choice for a human evaluation. Raises if the resolution is
+    unrecognised or no ``current.yaml`` record exists.
+    """
+    verdict = resolve_to_verdict(pf)
+    current = read_current(root, pf.capability)
+    if current is None or pf.item_id not in current.items:
+        raise ValueError(
+            f"no current.yaml record for {pf.capability}/{pf.item_id}; "
+            "cannot apply human resolution"
+        )
+    prior = current.items[pf.item_id]
+    current.items[pf.item_id] = verdict.model_copy(
+        update={"attempts_used": prior.attempts_used}
+    )
+    write_current(root, current)
+    archived = archive_pending(root, pending_path)
+    return ResolutionApplied(
+        pending_path=archived,
+        capability=pf.capability,
+        item_id=pf.item_id,
+        choice=0,
+        intent_changed=False,
+    )
+
+
 def apply_resolutions(root: Path) -> list[ResolutionApplied]:
     """Translate every resolved pending file into an intent or current.yaml edit.
 
@@ -576,6 +611,17 @@ def apply_resolutions(root: Path) -> list[ResolutionApplied]:
             pf = read_pending(pp)
         except Exception:
             # Malformed pending file — leave it alone; operator can clean up.
+            continue
+        # Human-evaluation resolutions carry a yes/no/partial (or numeric)
+        # verdict, not an escalation choice — apply via resolve_to_verdict
+        # and write the verdict straight into current.yaml.
+        if pf.kind == "human_evaluation":
+            try:
+                applied.append(_apply_human_resolution(root, pf, pp))
+            except Exception:
+                # Unrecognised resolution or no current.yaml record — leave
+                # the file for the operator, same as the escalation path.
+                continue
             continue
         try:
             choice = _parse_choice(pf.resolution or "")

@@ -1,0 +1,6 @@
+tick_id: 2026-05-21-66e885
+ran_at: '2026-05-21T13:13:55.947156Z'
+actions:
+- 'ran_develop: intent-shipped-status (LLM-driven; subprocess hook deferred)'
+- 'ran_evidence: intent-shipped-status (11 pass, 0 trending, 0 fail)'
+- 'promoted_to_shipped: intent-shipped-status'

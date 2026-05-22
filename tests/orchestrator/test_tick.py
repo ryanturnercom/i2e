@@ -42,8 +42,14 @@ def _basic_evidence() -> list[dict]:
 def test_tick_shippable_writes_nothing(
     project: Path, write_intent, write_current_for, patch_providers
 ):
+    """An already-shipped project ticks to Shippable with no side effects.
+
+    Active + all-green capabilities auto-promote to shipped on the next
+    tick (§6.1, intent-shipped-status), so we set the capability up as
+    shipped from the start to exercise the steady state.
+    """
     patch_providers({"pytest": FakeProvider("pytest", always_pass())})
-    write_intent("alpha", evidence=_basic_evidence(), version=1)
+    write_intent("alpha", evidence=_basic_evidence(), version=1, status="shipped")
     write_current_for(
         "alpha",
         {"case-a": {"verdict": "pass", "attempts_used": 0}},
@@ -115,10 +121,10 @@ def test_tick_apply_resolutions_archives_pending_file(
     )
     pf = PendingFile(
         status="resolved",
-        kind="human_evaluation",
+        kind="escalation",
         capability="alpha",
         item_id="case-a",
-        asked_at=datetime.now(timezone.utc),
+        escalated_at=datetime.now(timezone.utc),
         ask="?",
         resolution="4",
     )

@@ -1,0 +1,4 @@
+tick_id: 2026-05-22-d967ac
+ran_at: '2026-05-22T00:43:32.290097Z'
+actions:
+- 'regression: scope=slug:intent-shipped-status caps=1 demoted=0'

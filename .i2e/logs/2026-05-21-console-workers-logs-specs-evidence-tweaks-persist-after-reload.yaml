@@ -1,0 +1,24 @@
+status: resolved
+kind: human_evaluation
+capability: console-workers-logs-specs-evidence
+item_id: tweaks-persist-after-reload
+asked_at: '2026-05-21T21:02:09.854765Z'
+escalated_at: null
+reason: null
+expect: yes — every axis survives a hard reload because the i2e_console_prefs cookie
+  travels with each request
+observed: null
+attempts: []
+ask: Toggle each tweak axis (density, sidebar, dashboard, intent-detail, logs default).
+  Does the layout change persist after a full page reload?
+verdict_options:
+- 'yes'
+- 'no'
+- partial
+resolution: 'no
+
+
+  I cannot see a tweaks ui at all.  I think the functionality is missing entirely.'
+url: null
+steps: null
+screenshot: null

@@ -64,6 +64,23 @@ def _seed_resolved(
     return write_pending(project, pf)
 
 
+def _seed_human_resolved(
+    project: Path, item_id: str, resolution: str
+) -> Path:
+    """Seed a resolved human_evaluation pending file for ``item_id``."""
+    pf = PendingFile(
+        status="resolved",
+        kind="human_evaluation",
+        capability="shorten-url",
+        item_id=item_id,
+        asked_at=datetime.now(timezone.utc),
+        ask="does it work?",
+        resolution=resolution,
+        verdict_options=["yes", "no", "partial"],
+    )
+    return write_pending(project, pf)
+
+
 def test_option_1_loosen_updates_expect_and_bumps_version(
     project, write_intent, write_current_for
 ):
@@ -324,3 +341,64 @@ def test_end_to_end_plan_escalate_apply(
     cap = parse_intent(intent_path)
     item = next(it for it in cap.evidence if it.id == target_item)
     assert item.expect == "+5%"
+
+
+# ── human_evaluation resolutions (yes/no/partial → verdict) ──────────────────
+
+
+def test_human_evaluation_yes_with_notes_resolves_to_pass(
+    project, write_intent, write_current_for
+):
+    _intent(write_intent)
+    write_current_for(
+        "shorten-url",
+        {"code-generated": {"verdict": "awaiting_human", "attempts_used": 2}},
+        intent_version=2,
+    )
+    # The console resolve form writes "<verdict>\n\n<notes>" — the appended
+    # note must not break the yes/no/partial match.
+    pp = _seed_human_resolved(project, "code-generated", "yes\n\nlooks correct")
+
+    applied = apply_resolutions(project)
+    assert len(applied) == 1
+    assert applied[0].item_id == "code-generated"
+
+    current = read_current(project, "shorten-url")
+    assert current.items["code-generated"].verdict == "pass"
+    # attempts_used carried over from the prior record.
+    assert current.items["code-generated"].attempts_used == 2
+    # Pending archived.
+    assert not pp.exists()
+    assert (logs_dir(project) / pp.name).exists()
+
+
+def test_human_evaluation_no_resolves_to_fail(
+    project, write_intent, write_current_for
+):
+    _intent(write_intent)
+    write_current_for(
+        "shorten-url",
+        {"code-generated": {"verdict": "awaiting_human", "attempts_used": 0}},
+        intent_version=2,
+    )
+    pp = _seed_human_resolved(project, "code-generated", "no")
+
+    applied = apply_resolutions(project)
+    assert len(applied) == 1
+
+    current = read_current(project, "shorten-url")
+    assert current.items["code-generated"].verdict == "fail"
+    assert not pp.exists()
+
+
+def test_human_evaluation_without_current_record_is_skipped(
+    project, write_intent
+):
+    _intent(write_intent)
+    # No current.yaml — the resolution has no verdict record to land on.
+    pp = _seed_human_resolved(project, "code-generated", "yes")
+
+    applied = apply_resolutions(project)
+    assert applied == []
+    # Left in place for the operator, never silently archived.
+    assert pp.exists()

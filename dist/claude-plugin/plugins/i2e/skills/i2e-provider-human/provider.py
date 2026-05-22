@@ -25,6 +25,9 @@ class HumanProvider:
             ask=item.query,
             expect=getattr(item, "expect", None),
             verdict_options=["yes", "no", "partial"],
+            url=getattr(item, "url", None),
+            steps=getattr(item, "steps", None),
+            screenshot=getattr(item, "screenshot", None),
         )
         path = write_pending(ctx.root, pf)
         return AsyncResult(pending=path.name)

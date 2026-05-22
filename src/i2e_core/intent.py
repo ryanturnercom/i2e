@@ -36,6 +36,12 @@ class EvidenceItem(BaseModel):
     expect: str
     window: str | None = None
     effort: str = "medium"
+    # Visual-review fields. Carried through to the pending file so a human
+    # reviewer sees discrete "what to open / what to do / what to compare"
+    # cues instead of a wall of prose stuffed into `query`.
+    url: str | None = None
+    steps: list[str] | None = None
+    screenshot: str | None = None
 
     @field_validator("id")
     @classmethod
@@ -52,6 +58,9 @@ class Constraint(BaseModel):
     expect: str
     effort: str = "medium"
     type: Literal["constraint"] = "constraint"
+    url: str | None = None
+    steps: list[str] | None = None
+    screenshot: str | None = None
 
     @field_validator("id")
     @classmethod
@@ -66,7 +75,7 @@ class Frontmatter(BaseModel):
     created: date
     updated: date
     version: int
-    status: Literal["draft", "active", "retired"]
+    status: Literal["draft", "active", "shipped", "retired"]
     watcher: str = "@me"
     depends_on: list[str] = Field(default_factory=list)
     touches: list[str] = Field(default_factory=lambda: ["**"])
@@ -141,7 +150,17 @@ def _split_body(body: str) -> tuple[str, str, str]:
     return description, evidence_yaml, constraints_yaml
 
 
-_STRING_FIELDS = {"id", "type", "provider", "query", "expect", "window", "effort"}
+_STRING_FIELDS = {
+    "id",
+    "type",
+    "provider",
+    "query",
+    "expect",
+    "window",
+    "effort",
+    "url",
+    "screenshot",
+}
 
 
 def _stringify(item: dict[str, Any]) -> dict[str, Any]:
@@ -206,8 +225,20 @@ _EVIDENCE_KEY_ORDER = (
     "expect",
     "window",
     "effort",
+    "url",
+    "steps",
+    "screenshot",
 )
-_CONSTRAINT_KEY_ORDER = ("id", "provider", "query", "expect", "effort")
+_CONSTRAINT_KEY_ORDER = (
+    "id",
+    "provider",
+    "query",
+    "expect",
+    "effort",
+    "url",
+    "steps",
+    "screenshot",
+)
 _FRONTMATTER_KEY_ORDER = (
     "capability",
     "created",
@@ -236,7 +267,12 @@ def _ordered(d: dict[str, Any], order: tuple[str, ...]) -> dict[str, Any]:
 
 def _render_scalar(v: Any) -> str:
     """Render a scalar value with PyYAML, stripping doc markers."""
-    s = yaml.safe_dump(v, default_flow_style=False, allow_unicode=True)
+    # width=10**9 disables PyYAML's default 80-col wrap. _dump_item assembles
+    # the surrounding `  key: ` context manually, so a wrapped continuation
+    # line lands at the wrong indent and a long string fails to round-trip.
+    s = yaml.safe_dump(
+        v, default_flow_style=False, allow_unicode=True, width=10**9
+    )
     # safe_dump appends "...\n" for top-level scalars; drop it and trailing nl.
     if s.endswith("...\n"):
         s = s[: -len("...\n")]
@@ -318,10 +354,16 @@ def write_intent(cap: Capability, path: Path) -> Path:
 _EVIDENCE_DEFAULTS: dict[str, Any] = {
     "window": None,
     "effort": "medium",
+    "url": None,
+    "steps": None,
+    "screenshot": None,
 }
 _CONSTRAINT_DEFAULTS: dict[str, Any] = {
     "effort": "medium",
     "type": "constraint",
+    "url": None,
+    "steps": None,
+    "screenshot": None,
 }
 
 

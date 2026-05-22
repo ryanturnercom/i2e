@@ -1,0 +1,11 @@
+capability: live-in-flight-status-panel
+last_run: 2026-05-20-07b928
+intent_version: 1
+items:
+  live-in-flight-status-panel-implemented:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-20T18:57:13.724666Z'
+    pending: null
+    raw: {}

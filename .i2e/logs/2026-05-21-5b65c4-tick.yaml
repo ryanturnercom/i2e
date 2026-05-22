@@ -1,0 +1,4 @@
+tick_id: 2026-05-21-5b65c4
+ran_at: '2026-05-21T13:19:18.747136Z'
+actions:
+- 'ran_adapt: i2e-regression (retries=9, escalations=0)'

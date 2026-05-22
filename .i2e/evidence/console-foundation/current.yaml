@@ -1,0 +1,53 @@
+capability: console-foundation
+last_run: 2026-05-21-9d01a6
+intent_version: 1
+items:
+  dashboard-renders:
+    verdict: pass
+    value: null
+    attempts_used: 1
+    last_observed: '2026-05-21T21:01:22.307831Z'
+    pending: null
+    raw: {}
+  sidebar-grouped-filter:
+    verdict: pass
+    value: null
+    attempts_used: 2
+    last_observed: '2026-05-21T21:01:22.682951Z'
+    pending: null
+    raw: {}
+  sse-typed-change-events:
+    verdict: pass
+    value: null
+    attempts_used: 1
+    last_observed: '2026-05-21T21:01:22.920015Z'
+    pending: null
+    raw: {}
+  last-tick-empty-state:
+    verdict: pass
+    value: null
+    attempts_used: 1
+    last_observed: '2026-05-21T21:01:23.323344Z'
+    pending: null
+    raw: {}
+  last-tick-summary-renders:
+    verdict: pass
+    value: null
+    attempts_used: 1
+    last_observed: '2026-05-21T21:01:23.743796Z'
+    pending: null
+    raw: {}
+  dashboard-strips-and-recent-ticks:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-22T00:20:15.744537Z'
+    pending: null
+    raw: {}
+  serve-binds-localhost-only:
+    verdict: pass
+    value: null
+    attempts_used: 1
+    last_observed: '2026-05-21T21:01:24.177364Z'
+    pending: null
+    raw: {}

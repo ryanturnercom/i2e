@@ -1,0 +1,11 @@
+capability: intent-status-controls-in-the-report
+last_run: 2026-05-20-811379
+intent_version: 1
+items:
+  intent-status-controls-in-the-report-implemented:
+    verdict: pass
+    value: null
+    attempts_used: 1
+    last_observed: '2026-05-20T18:42:50.575973Z'
+    pending: null
+    raw: {}

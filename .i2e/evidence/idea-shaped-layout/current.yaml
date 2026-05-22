@@ -1,0 +1,11 @@
+capability: idea-shaped-layout
+last_run: 2026-05-20-5cf5da
+intent_version: 1
+items:
+  idea-shaped-layout-implemented:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-20T19:01:59.733039Z'
+    pending: null
+    raw: {}

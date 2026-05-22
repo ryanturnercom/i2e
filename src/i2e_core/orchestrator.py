@@ -57,6 +57,7 @@ from .config import load_config
 from .deps import build_graph, find_cycle, find_unknown_refs, ready_slugs
 from .develop import scoped_capabilities
 from .evidence import read_current
+from .init import init_project
 from .intent import parse_intent
 from .paths import i2e_dir, intents_dir
 from .pending import list_resolved_pending
@@ -326,6 +327,26 @@ def _active_capabilities(root: Path) -> list[str]:
     return sorted(out)
 
 
+def _branch4_capabilities(root: Path) -> list[str]:
+    """Branch 4 candidates: active *and* shipped intents, alphabetical.
+
+    Shipped capabilities still re-evaluate target windows (spec §6.1) —
+    a stale target on a shipped capability can demote it back to active.
+    """
+    base = intents_dir(Path(root))
+    if not base.exists():
+        return []
+    out: list[str] = []
+    for path in sorted(base.glob("*.md")):
+        try:
+            cap = parse_intent(path)
+        except Exception:
+            continue
+        if cap.frontmatter.status in ("active", "shipped"):
+            out.append(cap.frontmatter.capability)
+    return sorted(out)
+
+
 def _item_window_for(root: Path, capability: str, item_id: str) -> str | None:
     """Look up the ``window:`` field for an item in the intent file.
 
@@ -358,14 +379,17 @@ def decide(root: Path) -> Action:
     """
     root = Path(root)
 
-    # Fast-path short-circuit: if there are no active capabilities AND no
-    # resolved pendings on disk, none of the five branches can fire — every
-    # one of them is gated on either an active capability or a resolved
-    # pending. Skipping straight to ``Shippable`` lets a no-op tick avoid
-    # the pending walk, current.yaml reads, and target-window math.
+    # Fast-path short-circuit: if there are no active capabilities, no
+    # resolved pendings, AND no shipped capabilities, none of the five
+    # branches can fire — every one of them is gated on one of those.
+    # Shipped capabilities can still fire branch 4 (target window
+    # re-evaluation) so they must keep decide() alive.
     resolved = list_resolved_pending(root)
     active = _active_capabilities(root)
-    if not resolved and not active:
+    shipped = [
+        s for s in _branch4_capabilities(root) if s not in active
+    ]
+    if not resolved and not active and not shipped:
         return Shippable()
 
     # Branch 1: resolved pending files awaiting application.
@@ -398,8 +422,10 @@ def decide(root: Path) -> Action:
             return AdaptThenRetry(capability=cap_slug)
 
     # Branch 4: a window has elapsed for some item.
+    # Shipped capabilities still re-evaluate target windows; only branches
+    # 1-3 skip shipped (spec §6.1, intent-shipped-status).
     now = datetime.now(timezone.utc)
-    for cap_slug in active:
+    for cap_slug in _branch4_capabilities(root):
         cur = read_current(root, cap_slug)
         if cur is None:
             continue
@@ -451,12 +477,106 @@ def _now_utc() -> datetime:
     return datetime.now(timezone.utc)
 
 
+# Narrow status-write carve-out for the orchestrator (spec §6.1,
+# intent-shipped-status). Only the auto-promote/auto-demote paths in
+# :func:`tick` may call these — every other status edit goes through
+# ``i2e-intent`` / ``intent_authoring.set_intent_status`` directly.
+
+_SHIPPED_GREEN_VERDICTS = frozenset({"pass", "met"})
+
+
+def _all_green(root: Path, capability: str) -> bool:
+    """True iff every item in ``current.yaml`` has a green verdict.
+
+    Returns ``False`` when no ``current.yaml`` exists or the file is
+    empty — there is no evidence to call green.
+    """
+    cur = read_current(root, capability)
+    if cur is None or not cur.items:
+        return False
+    return all(
+        iv.verdict in _SHIPPED_GREEN_VERDICTS for iv in cur.items.values()
+    )
+
+
+def _orchestrator_promote_to_shipped(root: Path, capability: str) -> bool:
+    """Orchestrator carve-out: flip ``active`` → ``shipped``.
+
+    Returns True iff the status actually changed. No-op if the intent file
+    is missing or the capability is not currently ``active``.
+    """
+    # Local import to avoid a top-level cycle: intent_authoring imports
+    # validation helpers that pull in this module's siblings.
+    from .intent_authoring import set_intent_status
+
+    path = intents_dir(Path(root)) / f"{capability}.md"
+    if not path.exists():
+        return False
+    try:
+        cap = parse_intent(path)
+    except Exception:
+        return False
+    if cap.frontmatter.status != "active":
+        return False
+    set_intent_status(root, capability, "shipped")
+    return True
+
+
+def _orchestrator_demote_to_active(root: Path, capability: str) -> bool:
+    """Orchestrator carve-out: flip ``shipped`` → ``active``.
+
+    Returns True iff the status actually changed.
+    """
+    from .intent_authoring import set_intent_status
+
+    path = intents_dir(Path(root)) / f"{capability}.md"
+    if not path.exists():
+        return False
+    try:
+        cap = parse_intent(path)
+    except Exception:
+        return False
+    if cap.frontmatter.status != "shipped":
+        return False
+    set_intent_status(root, capability, "active")
+    return True
+
+
+_DEMOTE_VERDICTS = frozenset({"fail", "unmet", "trending"})
+
+
+def _maybe_demote_after_reevaluate(
+    root: Path, capability: str, item_id: str
+) -> bool:
+    """Demote ``capability`` from shipped → active iff the re-evaluated item
+    flipped to ``fail``/``unmet``/``trending``.
+
+    Returns True iff a status flip happened.
+    """
+    cur = read_current(root, capability)
+    if cur is None:
+        return False
+    iv = cur.items.get(item_id)
+    if iv is None:
+        return False
+    if iv.verdict not in _DEMOTE_VERDICTS:
+        return False
+    return _orchestrator_demote_to_active(root, capability)
+
+
 def tick(root: Path) -> TickResult:
     """Run one orchestrator tick. Raises :class:`PreflightFailed` on bad state.
 
     See the module docstring for the full flow.
     """
     root = Path(root)
+
+    # First-run scaffold: ensure the .i2e/ layout and helper scripts exist
+    # before anything reads or writes beneath it. Idempotent — a no-op on
+    # every tick after the first. Deliberate boundary carve-out: the
+    # orchestrator otherwise writes only .i2e/logs/** and report.html
+    # (see CLAUDE.md boundary table).
+    init_project(root)
 
     pre = preflight(root)
     if not pre.valid:
@@ -491,6 +611,14 @@ def tick(root: Path) -> TickResult:
             actions_log.append(
                 f"ran_evidence: {action.capability} (failed: {e})"
             )
+        # Auto-promote active → shipped when every verdict is green
+        # (intent-shipped-status, §6.1).
+        if _all_green(root, action.capability) and _orchestrator_promote_to_shipped(
+            root, action.capability
+        ):
+            actions_log.append(
+                f"promoted_to_shipped: {action.capability}"
+            )
 
     elif isinstance(action, AdaptThenRetry):
         pl = adapt.plan(root, action.capability)
@@ -522,8 +650,27 @@ def tick(root: Path) -> TickResult:
             actions_log.append(
                 f"ran_evidence: {action.capability} (failed: {e})"
             )
+        # Auto-demote shipped → active if the re-evaluated item regressed
+        # (intent-shipped-status, §6.1).
+        if _maybe_demote_after_reevaluate(
+            root, action.capability, action.item_id
+        ):
+            actions_log.append(
+                f"demoted_to_active: {action.capability}"
+            )
 
     # Shippable → leave actions_log empty.
+
+    # End-of-tick sweep: any active capability whose current.yaml is
+    # all-green gets auto-promoted to shipped, even if the tick's primary
+    # action did not touch it (e.g. AdaptThenRetry on capability X with a
+    # separate capability Y silently going green). The carve-out remains
+    # narrow — only active → shipped, never any other transition.
+    for cap_slug in _active_capabilities(root):
+        if _all_green(root, cap_slug) and _orchestrator_promote_to_shipped(
+            root, cap_slug
+        ):
+            actions_log.append(f"promoted_to_shipped: {cap_slug}")
 
     # Tick log: write only if something happened (spec §9).
     if actions_log:
@@ -541,7 +688,7 @@ def tick(root: Path) -> TickResult:
     report_link: str | None = None
     if actions_log:
         report_path = render(root)
-        focus = _focus_for_action(action)
+        focus = _focus_for_action(action, root)
         report_link = deep_link(root, focus)
 
     return TickResult(
@@ -554,12 +701,31 @@ def tick(root: Path) -> TickResult:
     )
 
 
-def _focus_for_action(action: Action) -> str:
-    """Return a deep-link fragment matching the action's focus capability."""
+def _focus_for_action(action: Action, root: Path | None = None) -> str:
+    """Return a deep-link fragment matching the action's focus capability.
+
+    When ``root`` is provided we read the current intent status and pick
+    the right anchor — a capability auto-promoted to ``shipped`` during
+    this tick lives in the Shipped section (``#shipped/<slug>``) rather
+    than the active card list (``#cap/<slug>``).
+    """
+    def _cap_anchor(slug: str) -> str:
+        if root is None:
+            return f"#cap/{slug}"
+        path = intents_dir(Path(root)) / f"{slug}.md"
+        if path.exists():
+            try:
+                status = parse_intent(path).frontmatter.status
+                if status == "shipped":
+                    return f"#shipped/{slug}"
+            except Exception:
+                pass
+        return f"#cap/{slug}"
+
     if isinstance(action, DevelopAndEvidence):
-        return f"#cap/{action.capability}"
+        return _cap_anchor(action.capability)
     if isinstance(action, AdaptThenRetry):
-        return f"#cap/{action.capability}"
+        return _cap_anchor(action.capability)
     if isinstance(action, ReEvaluateItem):
         return f"#item/{action.capability}/{action.item_id}"
     # ApplyResolutions / Shippable don't have a single focus — link to top.

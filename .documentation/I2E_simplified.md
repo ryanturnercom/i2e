@@ -15,7 +15,7 @@ moving parts, code in normal places, the whole thing driven by skills.
 | Charter with **four sections** (Purpose, Targets, Cases, Constraints) | **One file per Capability** with two lists (Evidence of Success, Constraints) — Cases & Targets are *types of evidence*, not sections |
 | **Five named roles** (Charter Owner, Case Librarian, Constraint Keeper, Verifier, Watcher) | No formal roles. Each evidence item names a `watcher`. Team norms govern. |
 | Source code under `.i2e/develop/<run-id>/system/` | Source code in **normal `src/`** — `.i2e/` only holds intent, proof, and history |
-| 45 skills across 3 tiers | **6 loop skills + N provider skills** |
+| 45 skills across 3 tiers | **8 loop skills + N provider skills** |
 | Custom SKILL.md schema | [agentskills.io](https://agentskills.io) SKILL.md convention |
 | `Delta` proposal artifacts | A `pending/` queue — one file per item waiting on a human |
 | Dashboard renders inside the loop | Two skills: `i2e-report` (static, auto on tick) and `i2e-serve` (live, opt-in) |
@@ -52,7 +52,7 @@ capability: shorten-url
 created: 2026-05-19
 updated: 2026-05-19
 version: 1
-status: active                    # draft | active | retired
+status: active                    # draft | active | shipped | retired
 watcher: '@platform-team'         # default for every item below
 depends_on: []                    # optional; slugs this capability waits on
 touches: ['src/shorten_url/**', 'tests/test_shorten_url.py']
@@ -125,6 +125,15 @@ is the 1-based section index. Together they let `i2e-spec --reconcile`
 diff the on-disk spec against the intents that claim it and propose
 add/edit/retire pending files.
 
+`status:` is a four-state enum: `draft` (preflight + decide both ignore),
+`active` (full IDEA loop), `shipped` (auto-promoted by the orchestrator
+the first tick `current.yaml` lands all-green — every verdict in
+`{pass, met}`; branches 1–3 skip these but branch 4 still fires so a
+target whose `window:` elapses can demote it back to `active`), and
+`retired` (tombstone, ignored). The orchestrator carve-out for writing
+status is scoped exclusively to the `active ↔ shipped` transitions —
+every other status edit flows through `i2e-intent`.
+
 ### 2.2 Case vs. Target — the deciding test
 
 > **Can the agent get a verdict right now, from the system alone?**
@@ -192,14 +201,31 @@ rather have a human decide than have the AI thrash.
 │   │       └── runs/
 │   │           └── <run-id>.yaml immutable per-run snapshot
 │   ├── pending/          items awaiting human input (open | resolved)
+│   ├── worktrees/        live batch-tick claims — one dir per in-flight capability
+│   │   └── <slug>/
+│   │       └── claim.json        {agent_id, session_id, pid, tick_id, step, started_at, progress}
 │   ├── logs/             append-only archive of resolved pending + non-empty ticks
 │   ├── report.html       static dashboard, regenerated on every state change
-│   └── config.yaml       effort tiers, defaults, advisory scheduler
+│   ├── config.yaml       effort tiers, defaults, advisory scheduler
+│   ├── .preflight_cache.json  intent-mtime hash → last green PreflightResult (fast no-op tick)
+│   └── .serve.url        present iff `i2e-serve` is up (written by serve, deleted on shutdown)
 ```
 
 `.i2e/context/` is **not loop-driven**. It's standing reference (architecture
 notes, glossary, conventions) the agent *reads* during Develop but never
 has to "prove."
+
+`.i2e/worktrees/<slug>/` directory existence **is** the in-flight lock for
+that capability. The atomic primitive is `os.makedirs(path, exist_ok=False)`
+(CAS on directory existence; atomic on POSIX and Windows). `claim.json`
+inside is the human-readable record, used for liveness checks and the
+in-flight surface in the report. See §6.3.
+
+`.preflight_cache.json` is a small dotfile keyed by
+`{intent_path: mtime_ns}` over `.i2e/intents/**`. A tick whose hash matches
+the cached entry skips re-parsing and reuses the last green
+`PreflightResult` — no-op ticks land in well under 100ms. Any edit, add,
+or remove invalidates the cache and forces a fresh validation.
 
 ---
 
@@ -212,14 +238,15 @@ collect evidence. All follow the agentskills.io SKILL.md convention.
 
 | Skill | Purpose |
 |---|---|
-| `i2e` | Orchestrator. Runs a preflight scan and advances the project by one step. |
-| `i2e-intent` | Author or edit Capability files. Only skill that touches `draft` intents. |
-| `i2e-spec` | Bulk decomposer: a PRD or design doc -> N draft capability files under `.i2e/intents/`, with the source preserved under `.i2e/specs/<slug>.md`. `--reconcile <slug>` diffs an edited spec against the intents that claim it. |
+| `i2e` | Orchestrator. Runs a preflight scan, plans a batch of non-conflicting actions, and advances the project. A no-op tick short-circuits on the preflight cache. |
+| `i2e-intent` | Author or edit Capability files. Only skill that touches `draft` intents and the rest of intent frontmatter. (The orchestrator has a narrow carve-out for the `runtime:` mirror — see §6.3.) |
+| `i2e-spec` | Bulk decomposer: a PRD or design doc → N draft capability files under `.i2e/intents/`, with the source preserved under `.i2e/specs/<slug>.md`. `--reconcile <slug>` diffs an edited spec against the intents that claim it. Generated intents carry `spec:` / `spec_section:` frontmatter so the round-trip survives. |
 | `i2e-develop` | Build the System in `src/`. Reads `.i2e/context/` for standing reference. Honours `touches:` — writes outside the declared globs fail the tick. Fans out within a capability: a `plan_develop` step groups evidence items by target file and runs distinct files in parallel sub-agents (one batch per same-file depth), so a capability that touches three independent files lands in roughly the time of the slowest. |
 | `i2e-evidence` | For each item, invoke its provider skill; write `current.yaml` + a new `runs/<id>.yaml`. |
 | `i2e-adapt` | Read evidence; auto-revise + re-trigger Develop within budget; on exhaustion, write to `pending/`. |
 | `i2e-report` | Render `.i2e/report.html` from current state. Auto-called by `i2e` after any state-changing tick. Deterministic Python, zero LLM tokens. |
-| `i2e-serve` | Optional. Start a tiny localhost HTTP server (127.0.0.1 only) with live SSE updates from `.i2e/` file changes. |
+| `i2e-serve` | Optional. Start a tiny localhost HTTP server (127.0.0.1 only) with live SSE updates from `.i2e/` file changes. The `start` subcommand blocks until shutdown so backgrounding it yields a reachable URL; the SSE watcher filters out its own writes (`report.html`, `.tmp`, `.serve.url`) to avoid a self-refresh loop. |
+| `i2e-regression` | Periodic case + constraint re-validation for shipped (or active, or all) capabilities. Targets stay out of scope — branch 4's `window:` owns that path. A regression that flips any verdict to `fail`/`unmet`/`trending` demotes the owning shipped capability back to `active`. Cadence is BYO (`/schedule`, OS scheduler, manual). |
 
 ### 4.2 Provider skills
 
@@ -265,8 +292,13 @@ gate shipping — they feed Adapt after the fact.
 
 ### 6.1 Orchestrator decision tree
 
-When `i2e` is invoked, it runs a preflight scan and takes the **first**
-action that applies:
+When `i2e` is invoked, it runs a preflight scan and selects an **eligible
+set** using the 5-branch decision tree below. The eligible set is then
+batch-planned (§6.3) and dispatched in parallel; a single-active-capability
+project collapses to a one-element batch with no extra overhead.
+
+Each capability in turn is matched against the **first** branch that
+applies:
 
 ```
 1. Any pending/ file with status: resolved?
@@ -288,7 +320,27 @@ action that applies:
    → mark shippable; do nothing.
 ```
 
-After any step that changes state, `i2e-report` runs and `.i2e/report.html`
+**Shipped capabilities** (`status: shipped`) are skipped by branches 1–3
+— they have already proven themselves. Branch 4 still iterates them so a
+target whose `window:` has elapsed can re-evaluate; if the new verdict
+regresses to `fail` / `unmet` / `trending`, the orchestrator auto-demotes
+the capability back to `active` and the next tick picks it up via the
+normal branch 2/3 paths. Auto-promote and auto-demote are the only paths
+through which the orchestrator writes the `status:` frontmatter field;
+every other status edit flows through `i2e-intent` (or the report's
+Promote / Demote buttons, which call into the same authoring API).
+
+**Fast no-op tick.** Before running the decision tree, the orchestrator
+short-circuits if there are no active capabilities, no shipped
+capabilities, AND no resolved pendings on disk — `decide()` returns
+`Shippable()` immediately, skipping the pending walk, current.yaml reads,
+version-bump comparisons, and target-window math. The preflight cache (`.i2e/.preflight_cache.json`) is
+the second half of this optimisation: a hash over `{intent_path:
+mtime_ns}` for `.i2e/intents/**` keys the last green `PreflightResult`,
+and an unchanged hash skips re-parsing entirely. Any mtime change forces
+a fresh validation.
+
+After any state-changing tick, `i2e-report` runs and `.i2e/report.html`
 is refreshed.
 
 ### 6.2 Pending — the human-in-the-loop queue
@@ -335,7 +387,51 @@ The human edits the file directly (or uses the dashboard), writes a
 orchestrator applies the resolution to the intent file, then **moves the
 pending file to `logs/`**. `pending/` shows only live items.
 
-### 6.3 Scheduler — BYO
+### 6.3 Batch execution — planner, claim, dispatch, merge
+
+The orchestrator runs **one batch of non-conflicting actions per tick**,
+not one action per tick. Four stages, each independently shippable and
+testable:
+
+1. **Plan.** Compute the eligible set via the 5-branch tree (§6.1). Drop
+   any capability whose `depends_on:` parents are not yet shippable.
+   Greedy-select members whose `touches:` globs do not overlap. Output
+   is an ordered list of slugs. A `Shippable` project produces an empty
+   batch (no-op). A single-active project produces a one-element batch
+   identical in shape to a legacy single-action tick.
+
+2. **Claim.** For each slug in the batch, atomically
+   `os.makedirs(.i2e/worktrees/<slug>/, exist_ok=False)`. Directory
+   existence **is** the lock — CAS across POSIX and Windows. On
+   `FileExistsError`, read `claim.json` and check the PID: alive → skip;
+   dead → remove the stale worktree and retry. On success, write
+   `claim.json` (`agent_id`, `session_id`, `pid`, `tick_id`, `step`,
+   `started_at`, `progress`).
+
+3. **Mirror.** After a successful claim, mirror a minimal `runtime:`
+   block into the capability's intent frontmatter
+   (`agent_id`/`session_id`/`tick_id`/`step`/`started_at`/`worktree`) so
+   `grep -l "^runtime:" .i2e/intents/*.md` answers "what is being worked
+   on right now." The orchestrator gets a narrow carve-out to write this
+   block only; `i2e-intent` still owns the rest of the frontmatter.
+   `status:` is never touched by this path. `claim.json` is
+   authoritative — deleting the `runtime:` block by hand does **not**
+   release the lock; only removing the worktree directory does.
+
+4. **Dispatch + merge.** Each claimed slug gets a git worktree of
+   `src/` + `tests/` and runs `i2e-develop` + `i2e-evidence` in parallel
+   via the Agent tool's `isolation: worktree`. When the batch finishes,
+   worktrees are merged back deterministically (alphabetical order). A
+   conflict aborts only that capability with a clear error — the rest
+   still land. On success or hard failure, the worktree directory is
+   removed and the `runtime:` mirror cleared, releasing the claim.
+
+No global lock is required: two concurrent ticks are safe as long as
+they claim disjoint capabilities. Two capabilities with overlapping
+`touches:` globs cannot share a batch — the planner serialises them
+across ticks instead.
+
+### 6.4 Scheduler — BYO
 
 I2E ships no scheduler. The orchestrator is just a skill; anything that
 can invoke an agent on a cadence works. Recommended patterns:
@@ -403,11 +499,66 @@ Two skills, one renderer, same templates:
   Auto-invoked by the orchestrator at the end of any state-changing tick.
   Deterministic Python; **zero LLM tokens**. Always fresh as of the last
   tick. Shared as a `file://` link.
-- **`i2e-serve`** — optional. Starts a detached localhost HTTP server
-  bound to 127.0.0.1, with SSE pushes on `.i2e/` mtime changes. Started
-  manually when actively working; killed when done.
+- **`i2e-serve`** — optional. Starts a localhost HTTP server bound to
+  127.0.0.1, with SSE pushes on `.i2e/` mtime changes. `start` blocks
+  until SIGINT or `/shutdown`; the watcher filters out the renderer's own
+  writes (`report.html`, `report.html.tmp`, `.serve.url`) so a GET does
+  not trigger another reload.
 
-### Deep links
+### 8.1 Layout — IDEA-shaped
+
+The report's dominant visual frame is the IDEA loop itself: **Intent →
+Develop → Evidence → Adapt**. A reader can point at a region of the page
+and name which stage it represents. The header carries the i2e wordmark
+in Google's *Rocksalt* font (matches the ryanturner.com brand) and a
+small footer links back to `ryanturner.com`.
+
+### 8.2 Capability cards
+
+Each `status: active` capability gets a card. Clicking the card expands
+it to show the underlying evidence — cases, constraints, latest verdicts
+— so a watcher can drill from the high-level shippable signal down to
+the failing query without leaving the page. Each card also surfaces
+inline **promote / demote controls** that flip the intent's status
+(`draft` → `active` → `retired`) and write the change back to the intent
+file; the next tick picks it up.
+
+The item meta line labels the budget counter as **`retries`**, not
+`attempts` (the underlying field is still `attempts_used` on disk —
+renaming it would invalidate every existing `current.yaml`).
+
+### 8.3 Drafts section
+
+`status: draft` capabilities render in their own "Drafts" section,
+visually separated from active. Evidence verdicts show when a
+`current.yaml` exists, otherwise items render as "no data" — same
+fallback the active path uses. **Drafts do not contribute to the
+`shippable` flag.** Retired capabilities stay hidden.
+
+`status: shipped` capabilities render in their own "Shipped (N)" section
+under the Intent stage, visually distinct from active. Each card carries
+the same Promote / Demote controls as active cards, so a watcher can
+flip a shipped capability back to active for re-work without leaving the
+report.
+
+### 8.4 Live in-flight panel
+
+A live panel surfaces which specs and intents are being worked on right
+now and their real-time status. It reads from `current.yaml`, pending
+files, and the active claim records under `.i2e/worktrees/<slug>/claim.json`
+(§6.3). Within the panel, **parallel agents** are shown explicitly: how
+many things are running simultaneously, each with its `agent_id`,
+`step`, and current `progress` text. Single-agent ticks render as a
+single row — no extra chrome.
+
+### 8.5 Watcher notifications
+
+A notifications surface at the top of the report calls out failure
+states, items pending a watcher's input, and targets needing human
+intervention or feedback — grouped by `watcher:`. The aim is "what
+needs me?" visible on landing, not buried behind a click.
+
+### 8.6 Deep links
 
 Agents share fragments into the report so the user lands directly on the
 relevant item:
@@ -432,7 +583,9 @@ Append-only, dated, signal-only — empty ticks don't log.
 ```
 .i2e/logs/
 ├── 2026-05-19-shorten-url-usage-growth.yaml   archived pending (one per resolution)
-└── 2026-05-19-a3f8c2-tick.yaml                 orchestrator tick that did something
+├── 2026-05-19-a3f8c2-tick.yaml                 orchestrator tick that did something
+└── regressions/
+    └── 2026-05-21-b1c2d3.yaml                  one entry per `i2e-regression` run
 ```
 
 Tick log shape:
@@ -444,7 +597,21 @@ actions:
   - applied_resolution: shorten-url / usage-growth
   - ran_develop: shorten-url (intent v1 -> v2)
   - ran_evidence: shorten-url (1 pass, 1 trending)
+sub_actions:                       # batch ticks (§6.3): one entry per batch member
+  - slug: shorten-url
+    step: develop
+    agent_id: 7c1f2e
+    outcome: pass
+  - slug: rate-limit
+    step: evidence
+    agent_id: a8d44b
+    outcome: trending
 ```
+
+`actions:` stays present and populated (typically with the batch-level
+summary line) so legacy readers keep working. `sub_actions:` is the
+preferred field for the report renderer and for any tooling that needs
+per-capability detail.
 
 ---
 
@@ -519,130 +686,29 @@ development. The cases are version-controlled, the fix is permanent.
 
 ---
 
-## 12. Planned extensions (v2 design)
+## 12. Planned extensions
 
-The sections above describe the system as it ships today. Five staged
-intents (all `status: draft` until reviewed) propose a v2 design that
-addresses four gaps: PRD ingestion, dependency ordering, multi-capability
-parallelism, and within-capability fan-out.
+The sections above describe the system as it ships today. All previously
+listed v2 draft intents have been folded into the numbered sections.
 
-Each item below links to a draft intent under `.i2e/intents/`. None has
-been activated; this section will be folded into the relevant numbered
-sections above as each intent reaches `shippable`.
+### 12.1 Recently activated (history)
 
-### 12.1 Capability dependencies — `depends_on:`
-Intent: [`intent-depends-on-field`](../.i2e/intents/intent-depends-on-field.md)
+For context — the following extensions were once listed as v2 drafts and
+have been folded into the numbered sections above. Listed here as a
+pointer for anyone reading old PRs or commit messages:
 
-Add `depends_on: [slug, ...]` to capability frontmatter. Preflight rejects
-cycles and unknown references. `decide()` topologically sorts the eligible
-set before the existing alphabetical tiebreaker, so a child never fires
-before its parent reaches `shippable`. Lands changes in §2.1, §5, §6.1.
-
-### 12.2 Declared file scope — `touches:`
-Intent: [`intent-touches-field`](../.i2e/intents/intent-touches-field.md)
-
-Add `touches: [glob, ...]` to capability frontmatter. `i2e-develop` may
-not write outside the declared globs (post-develop check). Two capabilities
-with overlapping `touches:` cannot run in parallel — the swarm scheduler
-serializes them. Lands changes in §2.1, §4.1, and adds a principle in §11.
-
-### 12.3 Swarm tick — one batch per tick
-Intent: [`swarm-tick`](../.i2e/intents/swarm-tick.md)
-
-Replaces "one action per tick" with "one batch of non-conflicting actions
-per tick." Builds on 12.1 and 12.2. Algorithm: compute eligible set →
-topo-sort by `depends_on:` → greedy-select a batch with no `touches:`
-overlap → claim each capability by atomically creating its
-`.i2e/worktrees/<slug>/` directory → dispatch develop + evidence in
-parallel via the Agent tool's `isolation: worktree` → merge results back
-deterministically.
-
-**Concurrency primitive — worktree directory as claim**
-
-There are no hidden `.lock` sidecar files. A capability is "claimed" iff
-`.i2e/worktrees/<slug>/` exists, and the atomic primitive is
-`os.makedirs(path, exist_ok=False)` (CAS on directory existence; atomic on
-both POSIX and Windows). Inside the worktree, `claim.json` records
-`{pid, tick_id, started_at}` for liveness checks. A dead PID means a
-stale claim — the next tick removes the worktree and reclaims.
-
-Frontmatter `status:` remains intent state (`draft`/`active`/`retired`)
-and is never touched by the tick. After a successful claim, the
-orchestrator *mirrors* a minimal `runtime:` block into the intent
-frontmatter (agent_id, session_id, tick_id, step, started_at, worktree)
-for at-a-glance visibility — `grep -l "^runtime:" .i2e/intents/*.md`
-shows what's running. The mirror is removed on release. `claim.json`
-remains authoritative; deleting the `runtime:` block by hand does not
-release the lock — only removing the worktree (or stale-PID sweep) does.
-The orchestrator gets a narrow carve-out to write the `runtime:` block
-only; `i2e-intent` still owns the rest of the frontmatter.
-
-No global lock is required at the orchestrator level: two concurrent ticks
-are safe as long as they claim disjoint capabilities. Lands changes in §2.1,
-§3, §6.1, §8, §9, §11.
-
-### 12.4 PRD → intents — `i2e-spec` skill
-Intent: [`i2e-spec-skill`](../.i2e/intents/i2e-spec-skill.md)
-
-New loop skill that ingests a markdown PRD or design doc and decomposes
-it into N draft intent files with `depends_on:` and `touches:` populated
-from the spec's structure. Preserves the original at `.i2e/specs/<slug>.md`.
-Each generated intent's frontmatter links back: `spec: <slug>`,
-`spec_section: <ref>`. A `--reconcile` subcommand keeps the intents and
-the source spec in sync over time. Lands changes in §2.1, §3, §4.1, and
-Appendix B.
-
-### 12.5 Within-capability fan-out — parallel develop
-Intent: [`develop-parallel-fanout`](../.i2e/intents/develop-parallel-fanout.md)
-
-`i2e-develop` plans a file-level task list and spawns one Agent per
-independent file in parallel (Claude Code's Agent tool already supports
-this). Goals sharing a file run sequentially. Requires 12.2 for the
-`touches:` scope. Lands changes in §4.1 and adds a principle in §11.
-
-### 12.6 `shipped` status for completed capabilities
-Intent: [`intent-shipped-status`](../.i2e/intents/intent-shipped-status.md)
-
-Adds a fourth status — `shipped` — to the `draft` / `active` / `retired`
-trio. Auto-promote `active → shipped` the first tick `current.yaml` is
-all-green (every verdict in `{pass, met}`). Shipped capabilities are
-skipped by branches 1–3 but branch 4 (target `window:` elapsed) still
-applies — if a target re-evaluates to `unmet`/`trending`/`fail` the
-orchestrator auto-demotes back to `active`. Case (pytest) regressions
-do **not** auto-demote — see 12.7. Status writes happen through the same
-narrow orchestrator carve-out used by `runtime:` in 12.3. The report
-renders shipped capabilities in their own "Shipped (N)" section. Lands
-changes in §2.1, §6.1, §8.
-
-### 12.7 `i2e-regression` skill — periodic case re-validation
-Intent: [`i2e-regression`](../.i2e/intents/i2e-regression.md)
-
-Companion to 12.6. The IDEA loop has no mechanism to re-run pytest cases
-for shipped capabilities — code rot, dependency upgrades, or external
-regressions can silently break them. The `i2e-regression` skill re-runs
-all case + constraint evidence for shipped (or active, or all)
-capabilities on demand or via cadence. Cases that flip to `fail` demote
-the owning capability from `shipped → active`, returning it to the
-normal IDEA loop. Targets are explicitly out of scope (they have their
-own `window:` mechanism). Cadence is BYO — call directly, schedule via
-`/schedule`, or wire to CI. Depends on 12.6. Lands changes in §4.1, §9,
-and Appendix B.
-
-### Activation order
-
-The intents are sequenced for safe stepwise rollout:
-
-1. `intent-depends-on-field` (frontmatter only; pure data)
-2. `intent-touches-field` (frontmatter only; pure data)
-3. `swarm-tick` (orchestrator + worktree machinery + `runtime:` mirror)
-4. `intent-shipped-status` (new state + auto-promote/demote)
-5. `i2e-spec-skill` (uses 1 + 2 when decomposing)
-6. `develop-parallel-fanout` (uses 2 to plan safely)
-7. `i2e-regression` (uses 4's demotion path)
-
-Each is independently shippable in this order. Activate one at a time and
-let the IDEA loop verify before moving on. 4 can ship before 3 if you
-want shipped-status without parallel execution; 7 must come after 4.
+| Intent (or split intents) | Folded into |
+|---|---|
+| `intent-depends-on-field` | §2.1, §5, §6.1 |
+| `intent-touches-field` | §2.1, §4.1, §11 |
+| `swarm-tick` — split into `atomic-worktree-claim`, `runtime-frontmatter-mirror`, `batch-tick-planner`, `worktree-dispatch-and-merge`, `tick-log-sub-actions` | §3, §6.1, §6.3, §9 |
+| `i2e-spec-skill` | §3, §4.1, Appendix B |
+| `develop-parallel-fanout` | §4.1, §11 |
+| `fast-tick-noop` | §3, §6.1 |
+| `report-shows-drafts`, `idea-shaped-layout`, `capability-case-details-on-click`, `intent-status-controls-in-the-report`, `live-in-flight-status-panel`, `parallel-agent-visibility`, `watcher-notifications`, `rocksalt-logo-font`, `report-rename-attempts-to-retries`, `footer-ryanturner-link` | §8 |
+| `serve-cli-blocks`, `serve-no-self-refresh-loop` | §4.1, §8 |
+| `intent-shipped-status` | §2.1, §6.1, §8 |
+| `i2e-regression` | §4.1, §9, Appendix B |
 
 ---
 
@@ -712,6 +778,7 @@ i2e-evidence         invoke providers, write current.yaml + runs/
 i2e-adapt            budgeted auto-improvement; pending on exhaustion
 i2e-report           render static .i2e/report.html (auto on tick)
 i2e-serve            optional localhost server with live SSE updates
+i2e-regression       periodic case re-run for shipped capabilities
 
 i2e-provider-pytest      cases, constraints — test runner
 i2e-provider-datadog     targets — metrics, latencies, counts

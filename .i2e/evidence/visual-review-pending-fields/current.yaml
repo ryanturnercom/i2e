@@ -1,0 +1,46 @@
+capability: visual-review-pending-fields
+last_run: 2026-05-21-9ba965
+intent_version: 1
+items:
+  evidence-item-accepts-visual-fields:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-21T13:42:07.237555Z'
+    pending: null
+    raw: {}
+  pending-file-carries-visual-fields:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-21T13:42:07.575288Z'
+    pending: null
+    raw: {}
+  human-provider-copies-visual-fields:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-21T13:42:08.449036Z'
+    pending: null
+    raw: {}
+  existing-intents-still-parse:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-21T13:42:09.260143Z'
+    pending: null
+    raw: {}
+  visual-target-blocks-shippable-until-resolved:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-21T13:42:09.617407Z'
+    pending: null
+    raw: {}
+  visual-fields-are-optional:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-21T13:42:09.967775Z'
+    pending: null
+    raw: {}

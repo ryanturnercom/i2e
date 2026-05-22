@@ -1,0 +1,27 @@
+status: resolved
+kind: human_evaluation
+capability: console-intent-and-writes
+item_id: promote-modal-blocks-invalid
+asked_at: '2026-05-22T00:38:39.571527Z'
+escalated_at: null
+reason: null
+expect: yes — modal lists each field+msg error and the intent status stays draft on
+  disk
+observed: null
+attempts: []
+ask: Take a draft intent that fails validation (e.g. missing watcher or evidence).
+  Try to promote it in the console. Does the modal show the right errors and prevent
+  the status change?
+verdict_options:
+- 'yes'
+- 'no'
+- partial
+resolution: 'partial
+
+
+  I see the message but its inline and not an actual modal that overlays and centers
+  on the screen.  its simply inline next to the button and it should really be an
+  actual modal.'
+url: null
+steps: null
+screenshot: null

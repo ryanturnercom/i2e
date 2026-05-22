@@ -1,0 +1,65 @@
+run_id: 2026-05-22-877e86
+ran_at: '2026-05-22T00:43:19.423449Z'
+scope: shipped
+capability_filter: intent-shipped-status
+capabilities:
+- capability: intent-shipped-status
+  prior_status: shipped
+  new_status: shipped
+  demoted: false
+  items:
+  - item_id: auto-promotes-when-all-green
+    type: case
+    prior_verdict: pass
+    new_verdict: pass
+    regressed: false
+  - item_id: does-not-promote-with-failing-verdict
+    type: case
+    prior_verdict: pass
+    new_verdict: pass
+    regressed: false
+  - item_id: shipped-skipped-by-branch-2
+    type: case
+    prior_verdict: pass
+    new_verdict: pass
+    regressed: false
+  - item_id: shipped-skipped-by-branch-3
+    type: case
+    prior_verdict: pass
+    new_verdict: pass
+    regressed: false
+  - item_id: shipped-allows-branch-4
+    type: case
+    prior_verdict: pass
+    new_verdict: pass
+    regressed: false
+  - item_id: regression-demotes-via-branch-4
+    type: case
+    prior_verdict: pass
+    new_verdict: pass
+    regressed: false
+  - item_id: manual-demotion-via-intent-skill
+    type: case
+    prior_verdict: pass
+    new_verdict: pass
+    regressed: false
+  - item_id: report-renders-shipped-section
+    type: case
+    prior_verdict: pass
+    new_verdict: pass
+    regressed: false
+  - item_id: spec-mentions-shipped-status
+    type: case
+    prior_verdict: pass
+    new_verdict: pass
+    regressed: false
+  - item_id: existing-three-states-unchanged
+    type: constraint
+    prior_verdict: pass
+    new_verdict: pass
+    regressed: false
+  - item_id: orchestrator-only-writes-status-on-promote-demote
+    type: constraint
+    prior_verdict: pass
+    new_verdict: pass
+    regressed: false

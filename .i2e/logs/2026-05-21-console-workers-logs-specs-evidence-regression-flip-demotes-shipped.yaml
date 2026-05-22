@@ -1,0 +1,26 @@
+status: resolved
+kind: human_evaluation
+capability: console-workers-logs-specs-evidence
+item_id: regression-flip-demotes-shipped
+asked_at: '2026-05-21T21:02:09.850057Z'
+escalated_at: null
+reason: null
+expect: yes — toast shows live stdout, final tick lands in Logs, capability status
+  flips shipped→active
+observed: null
+attempts: []
+ask: Run regression on a shipped capability where one of its cases now fails. Does
+  the toast show streaming progress, and does the capability get demoted to active
+  when it completes?
+verdict_options:
+- 'yes'
+- 'no'
+- partial
+resolution: 'no
+
+
+  There is no regression button or screen or menu item.  I don''t see this functionality
+  at all.'
+url: null
+steps: null
+screenshot: null

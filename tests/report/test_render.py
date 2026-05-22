@@ -140,6 +140,52 @@ def test_render_no_capabilities_message(project: Path) -> None:
     assert "No active capabilities yet." in html
 
 
+def test_footer_links_to_ryanturner(project: Path) -> None:
+    """The footer must reference ryanturner.com on every render, regardless of state."""
+    # Empty project (no intents) — footer still renders.
+    html = render_to_string(project)
+    assert "<footer" in html
+    assert 'href="https://ryanturner.com"' in html
+    assert 'target="_blank"' in html
+    assert 'rel="noopener"' in html
+    assert "ryanturner.com" in html
+
+    # And again with an active capability + drafts in play.
+    from i2e_core.evidence import CurrentEvidence, ItemVerdict, write_current
+    from datetime import datetime, timezone
+
+    # Reuse the conftest write_intent indirectly via simple inline writes.
+    intents = project / ".i2e" / "intents"
+    intents.mkdir(parents=True, exist_ok=True)
+    (intents / "alpha.md").write_text(
+        "---\ncapability: alpha\ncreated: '2026-05-20'\nupdated: '2026-05-20'\n"
+        "version: 1\nstatus: active\nwatcher: '@me'\n---\n\n"
+        "## Evidence of success\n\n"
+        "- id: case-a\n  type: case\n  provider: pytest\n  query: q\n"
+        "  expect: passes\n  effort: medium\n\n## Constraints\n",
+        encoding="utf-8",
+    )
+    write_current(
+        project,
+        CurrentEvidence(
+            capability="alpha",
+            last_run="2026-05-20-aaa000",
+            intent_version=1,
+            items={
+                "case-a": ItemVerdict(
+                    verdict="pass",
+                    attempts_used=0,
+                    last_observed=datetime.now(timezone.utc),
+                )
+            },
+        ),
+    )
+    html2 = render_to_string(project)
+    assert 'href="https://ryanturner.com"' in html2
+    # Footer comes after </main> so it sits at the bottom of the page.
+    assert html2.index("</main>") < html2.index("<footer")
+
+
 def test_html_has_drafts_section(
     project: Path, write_intent, write_current_for
 ) -> None:

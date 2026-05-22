@@ -1,9 +1,9 @@
 ---
 capability: i2e-regression
 created: '2026-05-20'
-updated: '2026-05-20'
+updated: '2026-05-21'
 version: 1
-status: draft
+status: shipped
 watcher: '@ryan'
 ---
 

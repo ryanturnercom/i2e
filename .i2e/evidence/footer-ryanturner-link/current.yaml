@@ -1,0 +1,11 @@
+capability: footer-ryanturner-link
+last_run: 2026-05-20-1bcdbf
+intent_version: 1
+items:
+  footer-link-present:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-20T18:58:28.625265Z'
+    pending: null
+    raw: {}

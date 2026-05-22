@@ -1,83 +1,247 @@
 
-<h2>Capabilities</h2>
-{% if not capabilities %}
-  <section class="card"><em>No active capabilities yet.</em></section>
-{% endif %}
-{% for cap in capabilities %}
-<section class="card" id="cap/{{ cap.slug }}">
-  <h3>{{ cap.slug }} <span class="cap-meta">— v{{ cap.version }} · {{ cap.status }} · watcher {{ cap.watcher }}</span></h3>
-  <div class="summary-line">
-    {% for verdict, count in cap.summary_sorted %}{{ verdict }}: {{ count }}{% if not loop.last %} · {% endif %}{% endfor %}
-  </div>
-  <div class="item-grid">
-    {% for item in cap.items %}
-    <div class="item" id="item/{{ cap.slug }}/{{ item.id }}">
-      <span class="id">{{ item.id }}</span>
-      <span class="type">{{ item.type }}{% if item.provider %} · {{ item.provider }}{% endif %}</span>
-      <span class="pill {{ item.verdict_class }}">{{ item.verdict_label }}</span>
-      {% if item.value is not none %}<span class="value">{{ item.value }}</span>{% endif %}
-      <span class="meta">
-        {{ item.attempts_used }}/{{ item.max_attempts }} retries
-        {% if item.last_observed %} · last {{ item.last_observed }}{% endif %}
-        {% if item.pending_basename %} · pending {{ item.pending_basename }}{% endif %}
-      </span>
-    </div>
+{% if notifications %}
+<section class="notifications" id="notifications" aria-label="What needs you">
+  <header class="notifications-header">
+    <h2 class="notifications-title">What needs you</h2>
+    <span class="notifications-count">{{ notifications|length }}</span>
+  </header>
+  <ul class="notifications-list">
+    {% set ns = namespace(prev_watcher=None) %}
+    {% for n in notifications %}
+      {% if n.watcher != ns.prev_watcher %}
+        <li class="notification-watcher-divider">watcher {{ n.watcher }}</li>
+        {% set ns.prev_watcher = n.watcher %}
+      {% endif %}
+      <li class="notification notification-{{ n.kind }}" id="notif/{{ n.capability }}/{{ n.item_id }}">
+        <span class="notification-kind kind-{{ n.kind }}">{{ n.kind }}</span>
+        <a class="notification-link" href="{{ n.href }}">
+          <span class="notification-cap">{{ n.capability }}</span>
+          <span class="notification-message">{{ n.message }}</span>
+        </a>
+      </li>
     {% endfor %}
-  </div>
-</section>
-{% endfor %}
-
-{% if drafts %}
-<h2 class="drafts-heading">Drafts</h2>
-{% for cap in drafts %}
-<section class="card draft" id="draft/{{ cap.slug }}">
-  <h3>{{ cap.slug }} <span class="cap-meta">— v{{ cap.version }} · {{ cap.status }} · watcher {{ cap.watcher }}</span></h3>
-  <div class="summary-line">
-    {% for verdict, count in cap.summary_sorted %}{{ verdict }}: {{ count }}{% if not loop.last %} · {% endif %}{% endfor %}
-  </div>
-  <div class="item-grid">
-    {% for item in cap.items %}
-    <div class="item" id="draft-item/{{ cap.slug }}/{{ item.id }}">
-      <span class="id">{{ item.id }}</span>
-      <span class="type">{{ item.type }}{% if item.provider %} · {{ item.provider }}{% endif %}</span>
-      <span class="pill {{ item.verdict_class }}">{{ item.verdict_label }}</span>
-      {% if item.value is not none %}<span class="value">{{ item.value }}</span>{% endif %}
-      <span class="meta">
-        {{ item.attempts_used }}/{{ item.max_attempts }} retries
-        {% if item.last_observed %} · last {{ item.last_observed }}{% endif %}
-        {% if item.pending_basename %} · pending {{ item.pending_basename }}{% endif %}
-      </span>
-    </div>
-    {% endfor %}
-  </div>
-</section>
-{% endfor %}
-{% endif %}
-
-<h2>Pending queue</h2>
-{% if not pending %}
-  <section class="card"><em>No open pending files.</em></section>
-{% endif %}
-{% for p in pending %}
-<details class="card" id="pending/{{ p.filename }}">
-  <summary>{{ p.filename }} <span class="cap-meta">— {{ p.kind }} · {{ p.capability }}/{{ p.item_id }} · {{ p.status }}</span></summary>
-  <div><strong>ask:</strong> {{ p.ask }}</div>
-  {% if p.verdict_options %}
-    <div class="cap-meta">options: {{ p.verdict_options|join(', ') }}</div>
-  {% endif %}
-  <textarea class="resolution" placeholder="resolution: (edit and save)">{{ p.resolution_template }}</textarea>
-</details>
-{% endfor %}
-
-<h2>Recent ticks</h2>
-{% if not ticks %}
-  <section class="card"><em>No tick logs yet.</em></section>
-{% endif %}
-{% for t in ticks %}
-<article class="card tick" id="tick/{{ t.tick_id }}">
-  <div class="tick-header">{{ t.tick_id }} <span class="cap-meta">— {{ t.ran_at }}</span></div>
-  <ul>
-    {% for a in t.actions %}<li>{{ a }}</li>{% endfor %}
   </ul>
-</article>
-{% endfor %}
+</section>
+{% endif %}
+
+<nav class="idea-nav" aria-label="IDEA loop">
+  <a class="idea-chip idea-i" href="#stage-intent"><span class="idea-letter">I</span><span class="idea-name">Intent</span></a>
+  <span class="idea-arrow" aria-hidden="true">→</span>
+  <a class="idea-chip idea-d" href="#stage-develop"><span class="idea-letter">D</span><span class="idea-name">Develop</span></a>
+  <span class="idea-arrow" aria-hidden="true">→</span>
+  <a class="idea-chip idea-e" href="#stage-evidence"><span class="idea-letter">E</span><span class="idea-name">Evidence</span></a>
+  <span class="idea-arrow" aria-hidden="true">→</span>
+  <a class="idea-chip idea-a" href="#stage-adapt"><span class="idea-letter">A</span><span class="idea-name">Adapt</span></a>
+</nav>
+
+<section class="idea-stage idea-stage-intent" id="stage-intent">
+  <h2 class="idea-heading"><span class="idea-letter-inline">I</span> Intent <span class="idea-tagline">— what we're building</span></h2>
+  {% if drafts %}
+  <h3 class="idea-subheading drafts-heading">Drafts</h3>
+  {% for cap in drafts %}
+  <section class="card draft" id="draft/{{ cap.slug }}">
+    <h3>{{ cap.slug }} <span class="cap-meta">— v{{ cap.version }} · {{ cap.status }} · watcher {{ cap.watcher }}</span></h3>
+    <div class="status-controls" data-slug="{{ cap.slug }}" data-status="{{ cap.status }}">
+      <button type="button" class="status-btn demote" data-action="demote" disabled>Demote</button>
+      <button type="button" class="status-btn promote" data-action="promote">Promote</button>
+    </div>
+    <div class="summary-line">
+      {% for verdict, count in cap.summary_sorted %}{{ verdict }}: {{ count }}{% if not loop.last %} · {% endif %}{% endfor %}
+    </div>
+    <details class="case-details">
+      <summary>Cases &amp; constraints ({{ cap.items|length }})</summary>
+      <div class="item-grid">
+        {% for item in cap.items %}
+        <div class="item" id="draft-item/{{ cap.slug }}/{{ item.id }}">
+          <div class="item-row">
+            <span class="id">{{ item.id }}</span>
+            <span class="type">{{ item.type }}{% if item.provider %} · {{ item.provider }}{% endif %}</span>
+            <span class="pill {{ item.verdict_class }}">{{ item.verdict_label }}</span>
+            <span class="meta">
+              {{ item.attempts_used }}/{{ item.max_attempts }} retries
+              {% if item.last_observed %} · last {{ item.last_observed }}{% endif %}
+              {% if item.pending_basename %} · pending {{ item.pending_basename }}{% endif %}
+            </span>
+          </div>
+          {% if item.query %}<div class="item-query"><span class="kv-label">query</span> <code>{{ item.query }}</code></div>{% endif %}
+          {% if item.expect %}<div class="item-expect"><span class="kv-label">expect</span> <code>{{ item.expect }}</code></div>{% endif %}
+          {% if item.value is not none %}<div class="item-value"><span class="kv-label">last value</span> <code class="value">{{ item.value }}</code></div>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </details>
+  </section>
+  {% endfor %}
+  {% endif %}
+
+  <h3 class="idea-subheading">Active capabilities</h3>
+  {% if not capabilities %}
+    <section class="card"><em>No active capabilities yet.</em></section>
+  {% endif %}
+  {% for cap in capabilities %}
+  <section class="card" id="cap/{{ cap.slug }}">
+    <h3>{{ cap.slug }} <span class="cap-meta">— v{{ cap.version }} · {{ cap.status }} · watcher {{ cap.watcher }}</span></h3>
+    <div class="status-controls" data-slug="{{ cap.slug }}" data-status="{{ cap.status }}">
+      <button type="button" class="status-btn demote" data-action="demote"{% if cap.status == 'draft' %} disabled{% endif %}>Demote</button>
+      <button type="button" class="status-btn promote" data-action="promote"{% if cap.status == 'retired' %} disabled{% endif %}>Promote</button>
+    </div>
+    <div class="summary-line">
+      {% for verdict, count in cap.summary_sorted %}{{ verdict }}: {{ count }}{% if not loop.last %} · {% endif %}{% endfor %}
+    </div>
+    <details class="case-details">
+      <summary>Cases &amp; constraints ({{ cap.items|length }})</summary>
+      <div class="item-grid">
+        {% for item in cap.items %}
+        <div class="item" id="item/{{ cap.slug }}/{{ item.id }}">
+          <div class="item-row">
+            <span class="id">{{ item.id }}</span>
+            <span class="type">{{ item.type }}{% if item.provider %} · {{ item.provider }}{% endif %}</span>
+            <span class="pill {{ item.verdict_class }}">{{ item.verdict_label }}</span>
+            <span class="meta">
+              {{ item.attempts_used }}/{{ item.max_attempts }} retries
+              {% if item.last_observed %} · last {{ item.last_observed }}{% endif %}
+              {% if item.pending_basename %} · pending {{ item.pending_basename }}{% endif %}
+            </span>
+          </div>
+          {% if item.query %}<div class="item-query"><span class="kv-label">query</span> <code>{{ item.query }}</code></div>{% endif %}
+          {% if item.expect %}<div class="item-expect"><span class="kv-label">expect</span> <code>{{ item.expect }}</code></div>{% endif %}
+          {% if item.value is not none %}<div class="item-value"><span class="kv-label">last value</span> <code class="value">{{ item.value }}</code></div>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </details>
+  </section>
+  {% endfor %}
+
+  {% if shipped %}
+  <h3 class="idea-subheading shipped-heading">Shipped ({{ shipped|length }})</h3>
+  {% for cap in shipped %}
+  <section class="card shipped" id="shipped/{{ cap.slug }}">
+    <h3>{{ cap.slug }} <span class="cap-meta">— v{{ cap.version }} · {{ cap.status }} · watcher {{ cap.watcher }}</span></h3>
+    <div class="status-controls" data-slug="{{ cap.slug }}" data-status="{{ cap.status }}">
+      <button type="button" class="status-btn demote" data-action="demote">Demote</button>
+      <button type="button" class="status-btn promote" data-action="promote">Promote</button>
+    </div>
+    <div class="summary-line">
+      {% for verdict, count in cap.summary_sorted %}<span class="pill {{ verdict }}">{{ verdict }}: {{ count }}</span>{% endfor %}
+    </div>
+    <details class="case-details">
+      <summary>Cases &amp; constraints ({{ cap.items|length }})</summary>
+      <div class="item-grid">
+        {% for item in cap.items %}
+        <div class="item" id="shipped-item/{{ cap.slug }}/{{ item.id }}">
+          <div class="item-row">
+            <span class="id">{{ item.id }}</span>
+            <span class="type">{{ item.type }}{% if item.provider %} · {{ item.provider }}{% endif %}</span>
+            <span class="pill {{ item.verdict_class }}">{{ item.verdict_label }}</span>
+            <span class="meta">
+              {{ item.attempts_used }}/{{ item.max_attempts }} retries
+              {% if item.last_observed %} · last {{ item.last_observed }}{% endif %}
+            </span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </details>
+  </section>
+  {% endfor %}
+  {% endif %}
+</section>
+
+<section class="idea-stage idea-stage-develop" id="stage-develop">
+  <h2 class="idea-heading"><span class="idea-letter-inline">D</span> Develop <span class="idea-tagline">— what's being built right now</span></h2>
+  <h3 class="idea-subheading">Live status</h3>
+  <section class="card live-panel" id="live-status">
+    {% if not in_flight and not pending %}
+      <div class="live-empty">Nothing in flight. {% if shippable %}Project is shippable.{% else %}Idle — next tick will pick up where the loop left off.{% endif %}</div>
+    {% else %}
+      <div class="live-summary" id="parallelism-summary">
+        <span class="live-count"><strong>{{ parallelism.parallel_count }}</strong> in flight</span>
+        <span class="live-count"><strong>{{ parallelism.distinct_agents }}</strong> agents</span>
+        <span class="live-count"><strong>{{ pending|length }}</strong> awaiting human</span>
+      </div>
+      {% if parallelism.by_step %}
+      <div class="parallelism-by-step" id="parallelism-by-step">
+        {% for step, count in parallelism.by_step_sorted %}
+        <span class="step-pill step-{{ step }}">{{ step }}: {{ count }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% if in_flight %}
+      <table class="live-table">
+        <thead><tr><th>capability</th><th>step</th><th>agent</th><th>started</th><th>progress</th></tr></thead>
+        <tbody>
+        {% for f in in_flight %}
+          <tr class="live-row{% if not f.alive %} stale{% endif %}" id="inflight/{{ f.slug }}">
+            <td><a href="#cap/{{ f.slug }}">{{ f.slug }}</a></td>
+            <td><span class="step-pill step-{{ f.step }}">{{ f.step }}</span></td>
+            <td class="live-agent">{{ f.agent_id }}{% if not f.alive %} <span class="stale-tag">stale</span>{% endif %}</td>
+            <td class="live-started">{{ f.started_at }}</td>
+            <td class="live-progress">{{ f.progress }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+    {% endif %}
+  </section>
+</section>
+
+<section class="idea-stage idea-stage-evidence" id="stage-evidence">
+  <h2 class="idea-heading"><span class="idea-letter-inline">E</span> Evidence <span class="idea-tagline">— what proves it</span></h2>
+  <section class="card">
+    <div class="evidence-roll">
+    {% set total = namespace(pass_=0, fail=0, met=0, unmet=0, trending=0, awaiting=0, none=0) %}
+    {% for cap in capabilities %}
+      {% for item in cap.items %}
+        {% if item.verdict == 'pass' %}{% set total.pass_ = total.pass_ + 1 %}{% endif %}
+        {% if item.verdict == 'fail' %}{% set total.fail = total.fail + 1 %}{% endif %}
+        {% if item.verdict == 'met' %}{% set total.met = total.met + 1 %}{% endif %}
+        {% if item.verdict == 'unmet' %}{% set total.unmet = total.unmet + 1 %}{% endif %}
+        {% if item.verdict == 'trending' %}{% set total.trending = total.trending + 1 %}{% endif %}
+        {% if item.verdict == 'awaiting_human' %}{% set total.awaiting = total.awaiting + 1 %}{% endif %}
+        {% if item.verdict == 'none' %}{% set total.none = total.none + 1 %}{% endif %}
+      {% endfor %}
+    {% endfor %}
+      <span class="pill pass">{{ total.pass_ }} pass</span>
+      <span class="pill met">{{ total.met }} met</span>
+      <span class="pill fail">{{ total.fail }} fail</span>
+      <span class="pill unmet">{{ total.unmet }} unmet</span>
+      <span class="pill trending">{{ total.trending }} trending</span>
+      <span class="pill awaiting">{{ total.awaiting }} awaiting</span>
+      <span class="pill none">{{ total.none }} no data</span>
+    </div>
+    <div class="evidence-hint">Drill into any active capability above to see the failing query and last value.</div>
+  </section>
+</section>
+
+<section class="idea-stage idea-stage-adapt" id="stage-adapt">
+  <h2 class="idea-heading"><span class="idea-letter-inline">A</span> Adapt <span class="idea-tagline">— what needs human input</span></h2>
+  <h3 class="idea-subheading">Pending queue</h3>
+  {% if not pending %}
+    <section class="card"><em>No open pending files.</em></section>
+  {% endif %}
+  {% for p in pending %}
+  <details class="card" id="pending/{{ p.filename }}">
+    <summary>{{ p.filename }} <span class="cap-meta">— {{ p.kind }} · {{ p.capability }}/{{ p.item_id }} · {{ p.status }}</span></summary>
+    <div><strong>ask:</strong> {{ p.ask }}</div>
+    {% if p.verdict_options %}
+      <div class="cap-meta">options: {{ p.verdict_options|join(', ') }}</div>
+    {% endif %}
+    <textarea class="resolution" placeholder="resolution: (edit and save)">{{ p.resolution_template }}</textarea>
+  </details>
+  {% endfor %}
+
+  <h3 class="idea-subheading">Recent ticks</h3>
+  {% if not ticks %}
+    <section class="card"><em>No tick logs yet.</em></section>
+  {% endif %}
+  {% for t in ticks %}
+  <article class="card tick" id="tick/{{ t.tick_id }}">
+    <div class="tick-header">{{ t.tick_id }} <span class="cap-meta">— {{ t.ran_at }}</span></div>
+    <ul>
+      {% for a in t.actions %}<li>{{ a }}</li>{% endfor %}
+    </ul>
+  </article>
+  {% endfor %}
+</section>

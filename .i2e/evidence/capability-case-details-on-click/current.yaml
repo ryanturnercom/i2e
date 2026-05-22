@@ -1,0 +1,11 @@
+capability: capability-case-details-on-click
+last_run: 2026-05-20-68f6b6
+intent_version: 1
+items:
+  capability-case-details-on-click-implemented:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-20T18:48:46.587485Z'
+    pending: null
+    raw: {}

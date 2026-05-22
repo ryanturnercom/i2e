@@ -1,0 +1,3 @@
+# Shell scripts must stay LF — they ship as package data and are copied
+# verbatim into new projects' .i2e/ by i2e_core.init. CRLF breaks bash.
+*.sh text eol=lf

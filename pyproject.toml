@@ -32,7 +32,7 @@ ga = [
 where = ["src"]
 
 [tool.setuptools.package-data]
-"i2e_core" = ["skills/**/*.md", "skills/**/*.py", "report/templates/*.j2"]
+"i2e_core" = ["skills/**/*.md", "skills/**/*.py", "report/templates/*.j2", "scaffold/*.sh"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
