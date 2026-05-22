@@ -255,6 +255,11 @@ def _gather_workers(root: Path) -> list[dict]:
             data = json.loads(claim.read_text(encoding="utf-8"))
         except Exception:
             continue
+        # The swarm Claim model serializes `slug`; the workers view and
+        # ConsoleState.workers_for() key on `capability`. Bridge them, and
+        # surface the worktree path for the card.
+        data["capability"] = data.get("slug") or slug_dir.name
+        data.setdefault("worktree", f".i2e/worktrees/{slug_dir.name}")
         log = slug_dir / "log"
         tail: list[str] = []
         if log.exists():

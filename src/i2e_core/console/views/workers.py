@@ -68,15 +68,15 @@ def workers_body(state: ConsoleState) -> str:
   {ui.eyebrow("Workers")}
   <h1 class="h1">{len(workers)} {"worker" if len(workers) == 1 else "workers"} in flight</h1>
   <div class="lead">Each lock under <span class="mono">.i2e/worktrees/&lt;slug&gt;/</span>
-  claims a capability for the current tick.</div>
+  marks a capability being developed right now.</div>
 </div>"""
     if not workers:
         return (
             f'<div class="stack" id="workers-view">{intro}'
             '<section class="card">'
             + ui.empty_state(
-                "No workers in flight",
-                "The orchestrator is idle — the next tick starts at the top of the decision tree.",
+                "Nothing in development right now",
+                "A capability appears here while a tick is developing it, and clears when it ships.",
             )
             + "</section></div>"
         )

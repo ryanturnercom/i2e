@@ -25,7 +25,7 @@ import concurrent.futures as _cf
 import json
 import os
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Callable, Literal
 
@@ -254,12 +254,36 @@ def sweep_stale(root: Path, slug: str) -> bool:
     return True
 
 
+def claim_is_stale(
+    claim: Claim,
+    *,
+    ttl_minutes: int = 60,
+    now: datetime | None = None,
+) -> bool:
+    """Return True when ``claim`` should be treated as abandoned.
+
+    A claim is stale when the process that wrote it is gone, or when it
+    has been held longer than ``ttl_minutes``. The TTL backstop covers a
+    recycled PID and the per-tick CLI mode where each tick is a fresh,
+    short-lived process — either signal frees the capability for another
+    instance to take over.
+    """
+    if not is_pid_alive(claim.pid):
+        return True
+    started = claim.started_at
+    if started.tzinfo is None:
+        started = started.replace(tzinfo=timezone.utc)
+    ref = now or _now_utc()
+    return ref - started > timedelta(minutes=ttl_minutes)
+
+
 __all__ = [
     "Claim",
     "DispatchReport",
     "DispatchResult",
     "Step",
     "acquire_claim",
+    "claim_is_stale",
     "claim_path",
     "clear_runtime",
     "dispatch_batch",

@@ -43,6 +43,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import sys
 import traceback
@@ -65,6 +66,13 @@ from .provider.discovery import installed_provider_names
 from .report import render
 from .report.links import deep_link
 from .runid import new_run_id
+from .swarm import (
+    acquire_claim,
+    claim_is_stale,
+    read_claim,
+    release_claim,
+    worktrees_root,
+)
 from .tick_log import TickLog, write_tick
 from .validator import ValidationError, validate_capability_with_config
 
@@ -370,6 +378,34 @@ def _item_window_for(root: Path, capability: str, item_id: str) -> str | None:
 
 _WINDOW_VERDICTS = frozenset({"met", "unmet", "trending"})
 
+# A develop lock held longer than this is treated as abandoned (a crashed
+# instance) so the swarm never deadlocks on it.
+_CLAIM_TTL_MINUTES = 60
+
+
+def _locked_by_others(root: Path) -> set[str]:
+    """Return slugs with a live develop claim held by a *different* process.
+
+    Lets concurrent ``i2e`` instances pick disjoint capabilities. A claim
+    owned by this process (resume our own work) or a stale one (the holder
+    crashed) does not block — it is ours to continue or free to take over.
+    """
+    base = worktrees_root(Path(root))
+    if not base.exists():
+        return set()
+    mine = os.getpid()
+    out: set[str] = set()
+    for slug_dir in base.iterdir():
+        if not slug_dir.is_dir():
+            continue
+        claim = read_claim(root, slug_dir.name)
+        if claim is None or claim.pid == mine:
+            continue
+        if claim_is_stale(claim, ttl_minutes=_CLAIM_TTL_MINUTES):
+            continue
+        out.add(claim.slug)
+    return out
+
 
 def decide(root: Path) -> Action:
     """Walk the 5-branch decision tree in order; return the first match.
@@ -396,6 +432,11 @@ def decide(root: Path) -> Action:
     if resolved:
         return ApplyResolutions()
 
+    # Capabilities a *different* live i2e instance is already developing —
+    # off-limits to this instance across branches 2-4 so concurrent
+    # instances swarm disjoint work.
+    locked = _locked_by_others(root)
+
     # Branch 2: an active capability needs develop (new or version-bumped).
     # depends_on respects ordering: a child never fires while a parent still
     # needs develop. Among the ready set, alphabetical breaks ties (spec §6.1).
@@ -404,16 +445,20 @@ def decide(root: Path) -> Action:
         scoped_slugs = {c.frontmatter.capability for c in scoped}
         graph = build_graph(root)
         ready = ready_slugs(graph, scoped_slugs)
-        # ready is always non-empty when scoped is non-empty: preflight rejects
-        # cycles, so the DAG over scoped has at least one source.
-        if ready:
-            return DevelopAndEvidence(capability=sorted(ready)[0])
-        # Defensive fallback: preflight should have caught any cycle, but if
-        # one slips through, falling back to alphabetical keeps the loop alive.
-        return DevelopAndEvidence(capability=sorted(scoped_slugs)[0])
+        # ready is non-empty when scoped is: preflight rejects cycles, so the
+        # DAG has a source. The fallback to scoped_slugs keeps the loop alive
+        # if one slips through anyway.
+        candidates = sorted(ready) if ready else sorted(scoped_slugs)
+        free = [s for s in candidates if s not in locked]
+        if free:
+            return DevelopAndEvidence(capability=free[0])
+        # Every develop-eligible capability is locked by another instance —
+        # nothing for this one to develop; fall through to branches 3-5.
 
     # Branch 3: a capability has retry-eligible items.
     for cap_slug in active:
+        if cap_slug in locked:
+            continue
         try:
             pl = adapt.plan(root, cap_slug)
         except Exception:
@@ -426,6 +471,8 @@ def decide(root: Path) -> Action:
     # 1-3 skip shipped (spec §6.1, intent-shipped-status).
     now = datetime.now(timezone.utc)
     for cap_slug in _branch4_capabilities(root):
+        if cap_slug in locked:
+            continue
         cur = read_current(root, cap_slug)
         if cur is None:
             continue
@@ -564,6 +611,36 @@ def _maybe_demote_after_reevaluate(
     return _orchestrator_demote_to_active(root, capability)
 
 
+def _ensure_develop_claim(root: Path, capability: str, tick_id: str) -> bool:
+    """Hold this instance's develop lock on ``capability``.
+
+    Returns True when this process holds the lock — freshly acquired,
+    already ours from an earlier tick, or taken over from a stale claim.
+    Returns False only when a live *other* instance owns it (a lost race);
+    the caller then skips develop and the loop re-decides next tick.
+    """
+    existing = read_claim(root, capability)
+    if existing is not None:
+        if existing.pid == os.getpid():
+            return True
+        if not claim_is_stale(existing, ttl_minutes=_CLAIM_TTL_MINUTES):
+            return False
+        # Stale — the holder crashed. Sweep it, then take over below.
+        release_claim(root, capability)
+    try:
+        acquire_claim(
+            root,
+            capability,
+            tick_id=tick_id,
+            step="develop",
+            agent_id=f"i2e-{os.getpid()}",
+            progress="develop + evidence",
+        )
+    except FileExistsError:
+        return False
+    return True
+
+
 def tick(root: Path) -> TickResult:
     """Run one orchestrator tick. Raises :class:`PreflightFailed` on bad state.
 
@@ -594,31 +671,38 @@ def tick(root: Path) -> TickResult:
             )
 
     elif isinstance(action, DevelopAndEvidence):
-        # The develop step is LLM-driven; the orchestrator only records the
-        # action string. The next tick will converge once develop completes
-        # (or the evidence runner picks up the new src/ layout below).
-        actions_log.append(
-            f"ran_develop: {action.capability} (LLM-driven; subprocess hook deferred)"
-        )
-        try:
-            summary = evidence_runner.run(root, action.capability)
+        cap = action.capability
+        # Hold a worktree lock for the capability while it is developed so
+        # the console /workers view shows it in flight and a second i2e
+        # instance never picks the same one. A lost race (another instance
+        # grabbed it first) just skips develop this tick.
+        if not _ensure_develop_claim(root, cap, tick_id):
             actions_log.append(
-                f"ran_evidence: {action.capability} ({summary.compact()})"
+                f"skipped_develop: {cap} (claimed by another instance)"
             )
-        except Exception as e:
-            # Evidence-runner failure surfaces in the action log but does
-            # not crash the tick — the next tick will retry.
+        else:
+            # The develop step is LLM-driven; the orchestrator only records
+            # the action string. The next tick converges once develop
+            # completes (or evidence picks up the new src/ layout below).
             actions_log.append(
-                f"ran_evidence: {action.capability} (failed: {e})"
+                f"ran_develop: {cap} (LLM-driven; subprocess hook deferred)"
             )
-        # Auto-promote active → shipped when every verdict is green
-        # (intent-shipped-status, §6.1).
-        if _all_green(root, action.capability) and _orchestrator_promote_to_shipped(
-            root, action.capability
-        ):
-            actions_log.append(
-                f"promoted_to_shipped: {action.capability}"
-            )
+            try:
+                summary = evidence_runner.run(root, cap)
+                actions_log.append(
+                    f"ran_evidence: {cap} ({summary.compact()})"
+                )
+            except Exception as e:
+                # Evidence-runner failure surfaces in the action log but
+                # does not crash the tick — the next tick will retry.
+                actions_log.append(f"ran_evidence: {cap} (failed: {e})")
+            # Auto-promote active → shipped when every verdict is green
+            # (intent-shipped-status, §6.1); release the lock on ship.
+            if _all_green(root, cap) and _orchestrator_promote_to_shipped(
+                root, cap
+            ):
+                actions_log.append(f"promoted_to_shipped: {cap}")
+                release_claim(root, cap)
 
     elif isinstance(action, AdaptThenRetry):
         pl = adapt.plan(root, action.capability)
@@ -671,6 +755,7 @@ def tick(root: Path) -> TickResult:
             root, cap_slug
         ):
             actions_log.append(f"promoted_to_shipped: {cap_slug}")
+            release_claim(root, cap_slug)
 
     # Tick log: write only if something happened (spec §9).
     if actions_log:
