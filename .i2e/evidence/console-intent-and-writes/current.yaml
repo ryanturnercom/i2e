@@ -59,11 +59,11 @@ items:
     pending: null
     raw: {}
   promote-modal-blocks-invalid:
-    verdict: awaiting_human
+    verdict: pass
     value: null
     attempts_used: 0
-    last_observed: null
-    pending: 2026-05-22-console-intent-and-writes-promote-modal-blocks-invalid.yaml
+    last_observed: '2026-05-22T01:20:38.418625Z'
+    pending: null
     raw: {}
   no-writes-outside-boundary:
     verdict: pass

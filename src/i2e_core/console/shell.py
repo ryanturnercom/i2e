@@ -22,6 +22,7 @@ _FONTS = (
 
 # Tweak axes — (cookie key, label, [(value, display), ...]).
 _TWEAK_AXES = (
+    ("theme", "Theme", (("light", "Light"), ("dark", "Dark"))),
     ("density", "Density", (("relaxed", "Relaxed"), ("dense", "Dense"))),
     (
         "sidebar",
@@ -129,7 +130,7 @@ def page(
 <script src="/static/htmx.min.js" defer></script>
 <script src="/static/console.js" defer></script>
 </head>
-<body class="console density-{ui.esc(prefs['density'])}">
+<body class="console density-{ui.esc(prefs['density'])} theme-{ui.esc(prefs['theme'])}">
 <div class="app">
 {sidebar}
 <main class="main">

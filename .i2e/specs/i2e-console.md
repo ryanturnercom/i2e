@@ -340,6 +340,13 @@ its current write set (only `.i2e/.serve.url`).
 | `src/i2e_core/report/last_tick.py` | Replaces `report/view_model.py` for the static last-tick summary. |
 | `src/i2e_core/report/templates/last_tick.html.j2` | Replaces `report.html.j2`. |
 
+
+
+##  Light and Dark Mode
+In the tweak settings I want to see light and dark mode and I want it to be remembered on refresh.
+
+
+
 #### Acceptance evidence (to be wired up via `i2e-intent`)
 
 Cases (pytest):

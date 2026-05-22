@@ -1,9 +1,0 @@
-data/
-.i2e/evidence/
-.i2e/pending/
-.i2e/logs/
-.i2e/report.html
-.i2e/.serve.url
-__pycache__/
-*.pyc
-.pytest_cache/

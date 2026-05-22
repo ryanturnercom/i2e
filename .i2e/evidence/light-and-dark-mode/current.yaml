@@ -1,0 +1,11 @@
+capability: light-and-dark-mode
+last_run: 2026-05-22-eb0c6b
+intent_version: 1
+items:
+  light-and-dark-mode-implemented:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-22T02:28:27.832056Z'
+    pending: null
+    raw: {}

@@ -11,6 +11,7 @@ from i2e_core.console.prefs import (
     build_set_cookie_header,
     parse_prefs_from_cookie,
 )
+from i2e_core.console.shell import _tweaks_panel, page
 
 
 def test_writes_cookie_on_change():
@@ -41,3 +42,44 @@ def test_server_renders_variant_from_cookie():
     assert prefs["dashboard"] == DEFAULT_PREFS["dashboard"]
     assert prefs["intent"] == DEFAULT_PREFS["intent"]
     assert prefs["logs"] == DEFAULT_PREFS["logs"]
+
+
+def _bootstrap(root):
+    """Minimal .i2e/ tree so shell.page() can render against a tmp root."""
+    for sub in ("intents", "evidence", "logs", "pending"):
+        (root / ".i2e" / sub).mkdir(parents=True)
+
+
+def test_theme_axis_present_and_persists(tmp_path):
+    """Light/Dark mode shows up in the Tweaks panel and is remembered.
+
+    Covers the ``light-and-dark-mode`` capability: the theme axis must be
+    visible in the tweak settings, the choice must round-trip through the
+    ``i2e_console_prefs`` cookie, and the remembered value must be applied
+    to the page ``<body>`` on every render (so a refresh keeps the theme).
+    """
+    # Theme is a first-class pref with a light default.
+    assert DEFAULT_PREFS["theme"] == "light"
+
+    # The Tweaks panel offers a Light/Dark theme control.
+    panel = _tweaks_panel(parse_prefs_from_cookie(None))
+    assert 'name="theme"' in panel
+    assert ">Light<" in panel
+    assert ">Dark<" in panel
+
+    # A chosen theme round-trips through the cookie — remembered on refresh.
+    header = build_set_cookie_header({**DEFAULT_PREFS, "theme": "dark"})
+    cookie = header.split(";", 1)[0]
+    assert parse_prefs_from_cookie(cookie)["theme"] == "dark"
+
+    # The panel reflects the remembered choice as the selected option.
+    assert '<option value="dark" selected>' in _tweaks_panel(
+        parse_prefs_from_cookie(cookie)
+    )
+
+    # The remembered theme is applied to the page <body> on every render.
+    _bootstrap(tmp_path)
+    assert "theme-light" in page(root=tmp_path, active="dashboard", body="x")
+    assert "theme-dark" in page(
+        root=tmp_path, active="dashboard", body="x", cookie=cookie
+    )

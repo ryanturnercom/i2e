@@ -1,0 +1,15 @@
+run_id: 2026-05-22-bffb8b
+ran_at: '2026-05-22T02:28:27.596109Z'
+scope: shipped
+capability_filter: light-and-dark-mode
+capabilities:
+- capability: light-and-dark-mode
+  prior_status: shipped
+  new_status: shipped
+  demoted: false
+  items:
+  - item_id: light-and-dark-mode-implemented
+    type: case
+    prior_verdict: pass
+    new_verdict: pass
+    regressed: false

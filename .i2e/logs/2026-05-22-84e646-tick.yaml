@@ -1,0 +1,4 @@
+tick_id: 2026-05-22-84e646
+ran_at: '2026-05-22T02:28:27.840806Z'
+actions:
+- 'regression: scope=slug:light-and-dark-mode caps=1 demoted=0'

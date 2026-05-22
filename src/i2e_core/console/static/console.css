@@ -37,6 +37,54 @@
   --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
 
+/* ───────────── Dark theme ───────────── */
+/* Selected via the Tweaks panel "Theme" axis — shell.py stamps body.theme-dark
+   from the i2e_console_prefs cookie. Overriding the design tokens flips the
+   charcoal-on-paper palette to paper-on-charcoal; component rules keep using
+   var(--…) so nothing below needs to change. --ink stays dark on purpose: it
+   backs every filled accent (sidebar, badges, buttons) with white text, so it
+   must remain a dark surface. The three "outline" components that instead use
+   --ink as text/border on a transparent surface get a targeted fix-up. */
+body.theme-dark {
+  --ink: #2e2e2e;
+  --ink-hover: #3c3c3c;
+  --canvas: #181818;
+  --card: #232323;
+  --text: #b2b2b2;
+  --heading: #f0f0f0;
+  --muted: #6f6f6f;
+  --disabled: #4a4a4a;
+  --border: #3a3a3a;
+  --hairline: #313131;
+  --border-subtle: #2a2a2a;
+  --surface-hover: #2a2a2a;
+  --surface-subtle: #242424;
+  --surface-muted: #2e2e2e;
+  --lilac: #2f2748;
+  --lilac-fg: #cdbff2;
+  --lilac-dot: #9a7fd0;
+  --pass-bg: oklch(0.30 0.05 152);
+  --pass-fg: oklch(0.86 0.10 152);
+  --fail-bg: #3c2020;
+  --fail-fg: #f1a8a8;
+  --trend-bg: oklch(0.34 0.06 75);
+  --trend-fg: oklch(0.88 0.12 75);
+  --ship-bg: oklch(0.32 0.06 240);
+  --ship-fg: oklch(0.86 0.11 240);
+  --shadow-card: 0 2px 40px rgba(0, 0, 0, 0.45);
+  --shadow-card-hover: 0 4px 50px rgba(0, 0, 0, 0.6);
+}
+/* --ink as text/border on a transparent surface reads too dark here; lift
+   the resting state to the heading/border tokens. Hover/checked states keep
+   their --ink fill + white text and stay correct. */
+body.theme-dark .btn.outline,
+body.theme-dark .status-btn,
+body.theme-dark .verdict-opt {
+  color: var(--heading);
+  border-color: var(--border);
+}
+body.theme-dark ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.16); }
+
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
 

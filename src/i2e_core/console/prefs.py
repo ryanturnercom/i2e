@@ -12,6 +12,7 @@ Schema:
       "dashboard": "cockpit" | "arc" | "inbox",
       "intent":    "single" | "split",
       "logs":      "timeline" | "table",
+      "theme":     "light" | "dark",
     }
 
 Unknown keys are silently dropped; missing keys fall back to the
@@ -33,6 +34,7 @@ DEFAULT_PREFS: dict[str, str] = {
     "dashboard": "cockpit",
     "intent": "split",
     "logs": "timeline",
+    "theme": "light",
 }
 
 
