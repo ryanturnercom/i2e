@@ -1,4 +1,4 @@
-status: open
+status: resolved
 kind: human_evaluation
 capability: console-intent-and-writes
 item_id: promote-modal-blocks-invalid
@@ -16,7 +16,7 @@ verdict_options:
 - 'yes'
 - 'no'
 - partial
-resolution: null
+resolution: 'yes'
 url: null
 steps: null
 screenshot: null

@@ -1,4 +1,4 @@
-status: open
+status: resolved
 kind: human_evaluation
 capability: console-workers-logs-specs-evidence
 item_id: tweaks-persist-after-reload
@@ -15,7 +15,7 @@ verdict_options:
 - 'yes'
 - 'no'
 - partial
-resolution: null
+resolution: 'yes'
 url: null
 steps: null
 screenshot: null
