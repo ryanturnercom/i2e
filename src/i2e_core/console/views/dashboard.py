@@ -10,7 +10,6 @@ from __future__ import annotations
 from pathlib import Path
 
 from .. import ui
-from ..prefs import parse_prefs_from_cookie
 from ..shell import page
 from ..state import ConsoleState, gather, tick_phase
 
@@ -175,38 +174,7 @@ def _recent_ticks(state: ConsoleState) -> str:
 </section>"""
 
 
-def _idea_arc(state: ConsoleState) -> str:
-    drafts = len(state.by_status("draft"))
-    active = len(state.by_status("active"))
-    workers = len(state.workers)
-    green = sum(
-        1
-        for c in state.capabilities
-        for it in c.items
-        if it.verdict in ("pass", "met")
-    )
-    pend = len(state.pendings)
-    stations = (
-        ("I", "Intent", active + drafts, f"{drafts} drafts · {active} active"),
-        ("D", "Develop", workers, f"{workers} workers running"),
-        ("E", "Evidence", green, "green verdicts"),
-        ("A", "Adapt", pend, f"{pend} pending humans"),
-    )
-    cells = "".join(
-        f'<div class="arc-station"><div class="arc-letter">{letter}</div>'
-        f'<div class="arc-name">{ui.esc(name)}</div>'
-        f'<div class="arc-count">{count}</div>'
-        f'<div class="arc-sub">{ui.esc(sub)}</div></div>'
-        for letter, name, count, sub in stations
-    )
-    return f"""<section class="card p24" id="idea-arc">
-  <div class="card-head"><h2 class="h2">The loop</h2>
-  <span class="mono faded">Intent → Develop → Evidence → Adapt</span></div>
-  <div class="arc-stations">{cells}</div>
-</section>"""
-
-
-def dashboard_body(state: ConsoleState, layout: str = "cockpit") -> str:
+def dashboard_body(state: ConsoleState) -> str:
     grids = "".join(_cap_grid(state, s) for s in ("active", "draft", "shipped"))
     if not grids:
         grids = ui.empty_state(
@@ -218,28 +186,12 @@ def dashboard_body(state: ConsoleState, layout: str = "cockpit") -> str:
     ticks = _recent_ticks(state)
     caps = f'<section id="capabilities">{grids}</section>'
 
-    if layout == "arc":
-        blocks = [
-            _idea_arc(state),
-            needs,
-            f'<div class="grid-2-1">{ship}{workers}</div>',
-            caps,
-            ticks,
-        ]
-    elif layout == "inbox":
-        blocks = [
-            needs,
-            f'<div class="grid-1-1">{workers}{ticks}</div>',
-            caps,
-            ship,
-        ]
-    else:  # cockpit
-        blocks = [
-            needs,
-            f'<div class="grid-2-1">{ship}{workers}</div>',
-            caps,
-            ticks,
-        ]
+    blocks = [
+        needs,
+        f'<div class="grid-2-1">{ship}{workers}</div>',
+        caps,
+        ticks,
+    ]
     return f'<div class="stack" id="dashboard">{"".join(blocks)}</div>'
 
 
@@ -251,7 +203,6 @@ def render_dashboard(
     cookie: str | None = None,
 ) -> str:
     state = gather(Path(root))
-    layout = parse_prefs_from_cookie(cookie).get("dashboard", "cockpit")
     return page(
         root=Path(root),
         active="dashboard",
@@ -262,5 +213,5 @@ def render_dashboard(
         sidebar_filter=flt,
         sidebar_q=q,
         cookie=cookie,
-        body=dashboard_body(state, layout),
+        body=dashboard_body(state),
     )

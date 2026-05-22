@@ -1,0 +1,40 @@
+run_id: 2026-05-22-0564d6
+capability: serve-autoreload
+intent_version: 2
+collected_at: '2026-05-22T13:41:27.826400Z'
+items:
+  autoreload-config-defaults-off:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-22T13:41:25.375120Z'
+    pending: null
+    raw: {}
+  autoreload-watches-code-dir:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-22T13:41:26.156033Z'
+    pending: null
+    raw: {}
+  code-change-triggers-reexec:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-22T13:41:27.021979Z'
+    pending: null
+    raw: {}
+  static-assets-no-store:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-22T13:41:27.824888Z'
+    pending: null
+    raw: {}
+  autoreload-end-to-end:
+    verdict: awaiting_human
+    value: null
+    attempts_used: 0
+    last_observed: null
+    pending: 2026-05-22-serve-autoreload-autoreload-end-to-end.yaml
+    raw: {}

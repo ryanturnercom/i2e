@@ -1,0 +1,22 @@
+status: open
+kind: human_evaluation
+capability: serve-autoreload
+item_id: autoreload-end-to-end
+asked_at: '2026-05-22T13:41:27.825397Z'
+escalated_at: null
+reason: null
+expect: yes — the server re-execs in the same terminal within a second or two of the
+  save and the browser reloads itself
+observed: null
+attempts: []
+ask: With serve.autoreload enabled in .i2e/config.yaml, start the server and edit
+  a console source file (e.g. add a comment to shell.py). Does the server restart
+  on its own and the page reload, without you touching the terminal?
+verdict_options:
+- 'yes'
+- 'no'
+- partial
+resolution: null
+url: null
+steps: null
+screenshot: null

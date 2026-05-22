@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import signal
 import sys
 import threading
@@ -37,6 +38,10 @@ from .paths import i2e_dir, serve_url_path
 
 
 _DEBOUNCE_SECONDS = 0.2
+
+# Auto-reload coalesces a burst of source writes (an editor save, or
+# i2e-develop fanning out across files) into a single process restart.
+_CODE_DEBOUNCE_SECONDS = 0.4
 
 
 class _ChangeBroker:
@@ -110,6 +115,7 @@ _SELF_WRITTEN_NAMES = frozenset(
         "report.html",
         "report.html.tmp",
         ".preflight_cache.json",
+        ".watch_state.json",
     }
 )
 
@@ -149,6 +155,62 @@ class _WatchdogHandler(FileSystemEventHandler):
             self._emit(event.src_path)
 
 
+def code_watch_dir() -> Path:
+    """Directory auto-reload watches for ``.py`` changes — the i2e_core package.
+
+    Resolved from this module's own location, so it is exactly the code the
+    running server executes. For an editable install that is ``src/i2e_core/``
+    (dogfooding i2e on itself); for a normal install it points into
+    site-packages, which simply never changes.
+    """
+    return Path(__file__).resolve().parent
+
+
+class _CodeReloadHandler(FileSystemEventHandler):
+    """Re-execs the server when a ``.py`` file under the code tree changes.
+
+    A burst of writes — an editor saving several files, or i2e-develop
+    fanning out — is debounced into a single restart. Only ``.py`` source
+    triggers a restart: bytecode is irrelevant and static assets are served
+    ``no-store``, so a plain refresh already picks those up.
+    """
+
+    def __init__(
+        self,
+        server: ThreadingHTTPServer,
+        *,
+        debounce: float = _CODE_DEBOUNCE_SECONDS,
+    ) -> None:
+        self._server = server
+        self._debounce = debounce
+        self._lock = threading.Lock()
+        self._timer: threading.Timer | None = None
+
+    def _on_change(self, event) -> None:
+        if event.is_directory or not str(event.src_path).endswith(".py"):
+            return
+        with self._lock:
+            if self._timer is not None:
+                self._timer.cancel()
+            self._timer = threading.Timer(self._debounce, self._fire)
+            self._timer.daemon = True
+            self._timer.start()
+
+    def on_modified(self, event) -> None:
+        self._on_change(event)
+
+    def on_created(self, event) -> None:
+        self._on_change(event)
+
+    def on_deleted(self, event) -> None:
+        self._on_change(event)
+
+    def _fire(self) -> None:
+        with self._lock:
+            self._timer = None
+        _restart(self._server)
+
+
 def _make_handler_class(
     root: Path, broker: _ChangeBroker, shutdown_event: threading.Event
 ):
@@ -185,6 +247,15 @@ def _make_handler_class(
                 shutdown_event.set()
                 threading.Thread(
                     target=self.server.shutdown, daemon=True
+                ).start()
+                return
+            if parsed.path == "/restart":
+                self._write_text(HTTPStatus.OK, "restarting", "text/plain")
+                # Re-exec must run off the handler thread so this response
+                # flushes first; _restart shuts down cleanly, then execs.
+                shutdown_event.set()
+                threading.Thread(
+                    target=_restart, args=(self.server,), daemon=True
                 ).start()
                 return
             if parsed.path == "/intent/status":
@@ -318,6 +389,7 @@ class _ServerHandle:
         broker: _ChangeBroker,
         url: str,
         url_file: Path,
+        code_watch_dir: Path | None = None,
     ) -> None:
         self.server = server
         self.thread = thread
@@ -325,6 +397,9 @@ class _ServerHandle:
         self.broker = broker
         self.url = url
         self.url_file = url_file
+        # The i2e_core code dir watched for auto-reload, or None when
+        # serve.autoreload is off. Surfaced for tests.
+        self.code_watch_dir = code_watch_dir
 
 
 # Registry of in-process handles, keyed by absolute root. Useful for tests
@@ -342,14 +417,16 @@ def start_server(
     *,
     port: int | None = None,
     open_browser: bool | None = None,
+    autoreload: bool | None = None,
 ) -> str:
     """Start the localhost server. Returns the URL.
 
     Refuses any host other than ``127.0.0.1`` (raises :class:`ValueError`).
     Writes ``.i2e/.serve.url`` while the server is up.
 
-    ``port`` and ``open_browser`` fall back to ``.i2e/config.yaml`` when
-    ``None``. Pass ``port=0`` for an ephemeral OS-assigned port (tests).
+    ``port``, ``open_browser`` and ``autoreload`` fall back to
+    ``.i2e/config.yaml`` when ``None``. Pass ``port=0`` for an ephemeral
+    OS-assigned port (tests).
     """
     if host != "127.0.0.1":
         raise ValueError(
@@ -359,12 +436,14 @@ def start_server(
     ldir = i2e_dir(root)
     ldir.mkdir(parents=True, exist_ok=True)
 
-    if port is None or open_browser is None:
+    if port is None or open_browser is None or autoreload is None:
         cfg = load_config(root)
         if port is None:
             port = cfg.serve.port
         if open_browser is None:
             open_browser = cfg.serve.open_browser
+        if autoreload is None:
+            autoreload = cfg.serve.autoreload
 
     broker = _ChangeBroker()
     shutdown_event = threading.Event()
@@ -382,6 +461,17 @@ def start_server(
     watch_dir = ldir
     handler = _WatchdogHandler(broker, watch_dir)
     observer.schedule(handler, str(watch_dir), recursive=True)
+
+    # When serve.autoreload is on, also watch the i2e_core package: a .py
+    # change there re-execs the server in place so the operator never has
+    # to restart by hand.
+    code_dir: Path | None = None
+    if autoreload:
+        code_dir = code_watch_dir()
+        observer.schedule(
+            _CodeReloadHandler(server), str(code_dir), recursive=True
+        )
+
     observer.start()
 
     def _serve() -> None:
@@ -400,7 +490,9 @@ def start_server(
     thread = threading.Thread(target=_serve, name="i2e-serve", daemon=True)
     thread.start()
 
-    handle = _ServerHandle(server, thread, observer, broker, url, url_file)
+    handle = _ServerHandle(
+        server, thread, observer, broker, url, url_file, code_dir
+    )
     with _HANDLES_LOCK:
         _HANDLES[str(root)] = handle
 
@@ -495,6 +587,36 @@ def stop_server(root: Path) -> None:
         pass
 
 
+# ---------- Restart ----------
+
+
+def _reexec() -> None:  # pragma: no cover - replaces the process image
+    """Replace the current process with a fresh ``i2e-serve`` invocation.
+
+    ``os.execv`` keeps the same PID and controlling terminal, so the
+    operator's foreground ``start.sh`` process restarts in place and
+    picks up code or config changes.
+    """
+    os.execv(
+        sys.executable,
+        [sys.executable, "-m", "i2e_core.serve", *sys.argv[1:]],
+    )
+
+
+def _restart(server: ThreadingHTTPServer) -> None:
+    """Shut the server down cleanly, then re-exec the process.
+
+    Split from :func:`_reexec` so tests can patch the exec step and
+    assert the ``/restart`` endpoint reaches it without replacing the
+    test process.
+    """
+    try:
+        server.shutdown()
+    except Exception:
+        pass
+    _reexec()
+
+
 # ---------- CLI ----------
 
 
@@ -530,6 +652,20 @@ def _main(argv: list[str] | None = None) -> int:
         action="store_false",
         help="Do not open the browser (overrides config).",
     )
+    reload_group = parser.add_mutually_exclusive_group()
+    reload_group.add_argument(
+        "--autoreload",
+        dest="autoreload",
+        action="store_true",
+        default=None,
+        help="Re-exec the server when i2e_core code changes (overrides config).",
+    )
+    reload_group.add_argument(
+        "--no-autoreload",
+        dest="autoreload",
+        action="store_false",
+        help="Do not auto-reload on code changes (overrides config).",
+    )
     args = parser.parse_args(argv)
 
     root = Path(args.root)
@@ -539,6 +675,7 @@ def _main(argv: list[str] | None = None) -> int:
             host=args.host,
             port=args.port,
             open_browser=args.open_browser,
+            autoreload=args.autoreload,
         )
         print(json.dumps({"url": url}), flush=True)
         # The serve thread is a daemon — if we return here, the process exits
@@ -584,4 +721,4 @@ if __name__ == "__main__":  # pragma: no cover - thin CLI shim
     raise SystemExit(_main(sys.argv[1:]))
 
 
-__all__ = ["start_server", "stop_server"]
+__all__ = ["code_watch_dir", "start_server", "stop_server"]

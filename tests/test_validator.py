@@ -115,3 +115,51 @@ def test_validate_capability_with_config_happy_path():
     validator.validate_capability_with_config(
         cap, cfg, installed_providers={"pytest"}
     )
+
+
+# ── Rule 4: human/subjective providers are Target-only ───────────────────────
+
+
+def test_human_provider_on_case_rejected():
+    cap = _make_capability(
+        evidence=[_evidence(id="vibe", type="case", provider="human")]
+    )
+    with pytest.raises(validator.ValidationError) as excinfo:
+        validator.validate_capability(cap)
+    assert any(
+        "human" in e and "not a target" in e for e in excinfo.value.errors
+    )
+
+
+def test_human_provider_on_constraint_rejected():
+    cap = _make_capability(
+        evidence=[_evidence()],
+        constraints=[
+            intent.Constraint.model_validate(
+                dict(id="no-bad-vibes", provider="human", query="q", expect="yes")
+            )
+        ],
+    )
+    with pytest.raises(validator.ValidationError) as excinfo:
+        validator.validate_capability(cap)
+    assert any(
+        "no-bad-vibes" in e and "not a target" in e
+        for e in excinfo.value.errors
+    )
+
+
+def test_survey_provider_on_case_rejected():
+    cap = _make_capability(
+        evidence=[_evidence(id="nps", type="case", provider="survey")]
+    )
+    with pytest.raises(validator.ValidationError) as excinfo:
+        validator.validate_capability(cap)
+    assert any("survey" in e for e in excinfo.value.errors)
+
+
+def test_human_provider_on_target_allowed():
+    cap = _make_capability(
+        evidence=[_evidence(id="brand-feel", type="target", provider="human")]
+    )
+    # A human/subjective provider on a target is the one valid placement.
+    validator.validate_capability(cap)

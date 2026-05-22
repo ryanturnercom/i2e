@@ -8,9 +8,19 @@
   }
   try {
     var es = new EventSource("/events");
+    var sawError = false;
     es.addEventListener("change", function () {
       if (!busy()) location.reload();
     });
+    // After an auto-reload restart the server briefly disappears: the
+    // EventSource errors, then reconnects once the fresh process is up.
+    // Reload on that recovery so a code-change restart is hands-free.
+    es.addEventListener("ready", function () {
+      if (sawError && !busy()) location.reload();
+    });
+    es.onerror = function () {
+      sawError = true;
+    };
   } catch (e) {
     /* SSE unavailable — console still works without live refresh. */
   }
@@ -21,4 +31,21 @@
     var modal = document.getElementById("action-modal");
     if (modal) modal.remove();
   });
+
+  // Tweaks panel "Restart server" button: POST to the restart endpoint,
+  // then reload the page after the configured delay so the browser
+  // reconnects to the freshly re-execed server.
+  var restartBtn = document.getElementById("restart-server");
+  if (restartBtn) {
+    restartBtn.addEventListener("click", function () {
+      var url = restartBtn.getAttribute("data-restart-url") || "/restart";
+      var delay = Number(restartBtn.getAttribute("data-reload-delay")) || 10000;
+      restartBtn.disabled = true;
+      restartBtn.textContent = "Restarting…";
+      fetch(url, { method: "POST" }).catch(function () {});
+      setTimeout(function () {
+        location.reload();
+      }, delay);
+    });
+  }
 })();

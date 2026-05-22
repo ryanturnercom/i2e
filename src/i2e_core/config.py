@@ -34,6 +34,19 @@ class SchedulerConfig(BaseModel):
 class ServeConfig(BaseModel):
     port: int = 4230
     open_browser: bool = True
+    autoreload: bool = False
+
+
+class WatchConfig(BaseModel):
+    """Settings for the ``i2e-watch`` intent-change watcher.
+
+    ``max_concurrent`` caps how many capabilities one watch cycle dispatches
+    in parallel. ``debounce_ms`` coalesces a burst of intent writes (an
+    editor save fires several events) into a single re-scan.
+    """
+
+    max_concurrent: int = 4
+    debounce_ms: int = 400
 
 
 class I2EConfig(BaseModel):
@@ -41,6 +54,7 @@ class I2EConfig(BaseModel):
     defaults: Defaults = Field(default_factory=Defaults)
     scheduler: SchedulerConfig = Field(default_factory=SchedulerConfig)
     serve: ServeConfig = Field(default_factory=ServeConfig)
+    watch: WatchConfig = Field(default_factory=WatchConfig)
 
 
 _DEFAULT_CASE_TIERS = {
@@ -75,6 +89,11 @@ def _default_dict() -> dict:
         "serve": {
             "port": 4230,
             "open_browser": True,
+            "autoreload": False,
+        },
+        "watch": {
+            "max_concurrent": 4,
+            "debounce_ms": 400,
         },
     }
 

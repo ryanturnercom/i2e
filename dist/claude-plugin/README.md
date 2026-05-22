@@ -31,10 +31,11 @@ pip install -e ".[dev]"
 
 ## Contents
 
-A single plugin (`i2e`) with 13 skills:
+A single plugin (`i2e`) with 16 skills:
 
-- **Loop skills** — `i2e`, `i2e-intent`, `i2e-develop`, `i2e-evidence`,
-  `i2e-adapt`, `i2e-report`, `i2e-serve`
+- **Loop skills** — `i2e`, `i2e-intent`, `i2e-spec`, `i2e-develop`,
+  `i2e-evidence`, `i2e-adapt`, `i2e-report`, `i2e-serve`,
+  `i2e-regression`, `i2e-watch`
 - **Reference providers** — `i2e-provider-pytest`, `i2e-provider-human`,
   `i2e-provider-ga`, `i2e-provider-datadog`, `i2e-provider-sentry`,
   `i2e-provider-survey`

@@ -1,0 +1,18 @@
+capability: remove-dashboard-tweak
+last_run: 2026-05-22-17dccf
+intent_version: 1
+items:
+  dashboard-axis-absent:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-22T13:27:54.745161Z'
+    pending: null
+    raw: {}
+  dashboard-pref-key-removed:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-22T13:27:55.090105Z'
+    pending: null
+    raw: {}

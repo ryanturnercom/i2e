@@ -2,7 +2,7 @@
 capability: light-and-dark-mode
 created: '2026-05-21'
 updated: '2026-05-22'
-version: 3
+version: 4
 status: active
 watcher: '@me'
 depends_on:
@@ -54,5 +54,12 @@ Estimate: ~1 week.
   expect: yes — the Tweaks panel shows a Light/Dark theme control and the chosen mode survives a page refresh
   effort: low
   url: http://127.0.0.1:4230/
+
+- id: theme-axis-in-panel
+  type: case
+  provider: pytest
+  query: tests/console/test_tweaks.py::test_theme_axis_in_panel
+  expect: passes
+  effort: medium
 
 ## Constraints

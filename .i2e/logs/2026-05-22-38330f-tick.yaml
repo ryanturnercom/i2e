@@ -1,0 +1,6 @@
+tick_id: 2026-05-22-38330f
+ran_at: '2026-05-22T13:27:55.137838Z'
+actions:
+- 'ran_develop: remove-dashboard-tweak (LLM-driven; subprocess hook deferred)'
+- 'ran_evidence: remove-dashboard-tweak (2 pass, 0 trending, 0 fail)'
+- 'promoted_to_shipped: remove-dashboard-tweak'

@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import hashlib
+import os
 import re
 from datetime import date
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Literal
 
@@ -192,9 +194,8 @@ def _parse_yaml_list(text: str) -> list[dict[str, Any]]:
     return [_stringify(it) if isinstance(it, dict) else it for it in data]
 
 
-def parse_intent(path: Path) -> Capability:
-    """Parse a Capability intent file into a ``Capability`` model."""
-    path = Path(path)
+def _parse_intent_uncached(path: Path) -> Capability:
+    """Parse a Capability intent file straight from disk — no caching."""
     raw = path.read_text(encoding="utf-8")
     post = frontmatter.loads(raw)
     fm = Frontmatter.model_validate(post.metadata)
@@ -212,6 +213,42 @@ def parse_intent(path: Path) -> Capability:
         evidence=evidence,
         constraints=constraints,
     )
+
+
+@lru_cache(maxsize=512)
+def _parse_intent_cached(abspath: str, mtime_ns: int) -> Capability:
+    """Memoised parse keyed on ``(absolute path, mtime)``.
+
+    ``mtime_ns`` is part of the cache key only: any edit to the file rotates
+    the key, so a stale parse is never returned. The cached ``Capability``
+    is shared — :func:`parse_intent` deep-copies it before handing it out.
+    """
+    return _parse_intent_uncached(Path(abspath))
+
+
+def parse_intent(path: Path) -> Capability:
+    """Parse a Capability intent file into a ``Capability`` model.
+
+    Memoised on ``(absolute path, mtime)``. A single orchestrator
+    ``decide()`` re-parses each intent file 2-5 times across its branch
+    walk; with the cache, every repeat is a dict lookup plus a deep copy
+    instead of a fresh read + 3 YAML parses + Pydantic validation. Any edit
+    rotates the mtime and forces a reparse — the same freshness contract the
+    preflight cache already relies on.
+
+    A deep copy is returned on every call, so callers that mutate the result
+    (``adapt.apply_resolutions``, the intent-authoring API) cannot corrupt
+    the shared cached instance.
+    """
+    path = Path(path)
+    try:
+        mtime_ns = path.stat().st_mtime_ns
+    except OSError:
+        # Missing/unreadable — defer to the uncached path so the real error
+        # (FileNotFoundError, ...) surfaces with a clean traceback.
+        return _parse_intent_uncached(path)
+    cap = _parse_intent_cached(os.path.abspath(path), mtime_ns)
+    return cap.model_copy(deep=True)
 
 
 # ---------- serialization ----------

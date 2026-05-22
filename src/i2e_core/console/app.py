@@ -62,7 +62,9 @@ def _static(path: str) -> Response:
     if not fp.is_file():
         return Response(404, "text/plain", b"not found")
     ctype = _CONTENT_TYPES.get(fp.suffix.lower(), "application/octet-stream")
-    return Response(200, ctype, fp.read_bytes(), {"Cache-Control": "max-age=3600"})
+    # no-store, not a long max-age: this is a localhost dev tool, so a CSS/JS
+    # edit must show on the next refresh without a hard-reload or a restart.
+    return Response(200, ctype, fp.read_bytes(), {"Cache-Control": "no-store"})
 
 
 def _error_modal(title: str, intro: str, errors: list) -> str:

@@ -58,8 +58,9 @@ verdict unchanged when they haven't.
   (no second pending file is written).
 - When the human resolves the pending file (`status: resolved`,
   `resolution: yes|no|partial`), the runner translates that into a real
-  Case verdict, archives the pending file to `.i2e/logs/`, and the next
-  evidence run will record `pass` or `fail` accordingly.
+  Target verdict — a human item is always a target (spec §2.2): `yes` →
+  `met`, `no` → `unmet`, `partial` → `trending` — archives the pending file
+  to `.i2e/logs/`, and the next evidence run records it accordingly.
 
 ## Python helpers (the deterministic core)
 - `i2e_core.evidence_runner.run(root, capability, only_items=None) -> RunSummary`

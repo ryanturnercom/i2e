@@ -7,6 +7,13 @@ from typing import Iterable
 from .config import I2EConfig
 from .intent import Capability, Constraint, EvidenceItem
 
+# Providers whose verdict is a person's subjective judgment. Such a verdict
+# cannot be produced "right now, from the system alone" (spec §2.2) — asking
+# a human always means waiting — so an item scored by one of these may only
+# be a target, never a case or a constraint. Extend this set whenever a new
+# async-human provider skill is added.
+HUMAN_PROVIDERS: frozenset[str] = frozenset({"human", "survey"})
+
 
 class ValidationError(Exception):
     """Aggregated validation failures."""
@@ -51,6 +58,17 @@ def validate_capability(
             "Capability has no evidence or constraints — every intent needs at "
             "least one way to know it worked"
         )
+
+    # Rule 4: a human/subjective provider may only score a target. Anything
+    # a person must judge is a target — never a case, never a constraint.
+    for it in _items(cap):
+        if it.provider in HUMAN_PROVIDERS and getattr(it, "type", None) != "target":
+            label = "Constraint" if isinstance(it, Constraint) else "Item"
+            errors.append(
+                f"{label} {it.id!r} uses the human/subjective provider "
+                f"{it.provider!r} but is not a target — anything a human must "
+                f"judge is a target, not a case or a constraint (spec §2.2)"
+            )
 
     if errors:
         raise ValidationError(errors)

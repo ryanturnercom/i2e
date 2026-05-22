@@ -173,8 +173,8 @@ def test_numeric_without_comparison_expect_falls_through() -> None:
         resolve_to_verdict(pf)
 
 
-def test_backward_compat_yes() -> None:
-    """The existing yes/no/partial branch still works for the human provider."""
+def test_human_yes_resolves_to_met() -> None:
+    """The human yes/no/partial branch coexists with the numeric survey branch."""
     pf = PendingFile(
         status="resolved",
         kind="human_evaluation",
@@ -185,10 +185,10 @@ def test_backward_compat_yes() -> None:
         resolution="yes",
     )
     v = resolve_to_verdict(pf)
-    assert v.verdict == "pass"
+    assert v.verdict == "met"
 
 
-def test_backward_compat_no() -> None:
+def test_human_no_resolves_to_unmet() -> None:
     pf = PendingFile(
         status="resolved",
         kind="human_evaluation",
@@ -199,4 +199,4 @@ def test_backward_compat_no() -> None:
         resolution="no",
     )
     v = resolve_to_verdict(pf)
-    assert v.verdict == "fail"
+    assert v.verdict == "unmet"

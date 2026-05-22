@@ -3,7 +3,7 @@ capability: remove-dashboard-tweak
 created: '2026-05-22'
 updated: '2026-05-22'
 version: 1
-status: active
+status: shipped
 watcher: '@ryan'
 depends_on:
 - console-foundation

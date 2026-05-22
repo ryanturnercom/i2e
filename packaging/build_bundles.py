@@ -12,7 +12,7 @@ Produces two artifacts under ``dist/``:
        └── plugins/i2e/
            ├── .claude-plugin/plugin.json
            ├── README.md
-           └── skills/<13 skill folders>
+           └── skills/<16 skill folders>
 
    Users install with::
 
@@ -115,7 +115,7 @@ def _marketplace_catalog(source_path: str) -> dict:
                 "name": PLUGIN_NAME,
                 "source": source_path,
                 "description": (
-                    "13 skills: orchestrator + intent/develop/evidence/adapt "
+                    "16 skills: orchestrator + intent/develop/evidence/adapt "
                     "loop steps + 6 reference evidence providers."
                 ),
                 "version": PLUGIN_VERSION,
@@ -237,10 +237,11 @@ pip install -e ".[dev]"
 
 ## Contents
 
-A single plugin (`{PLUGIN_NAME}`) with 13 skills:
+A single plugin (`{PLUGIN_NAME}`) with 16 skills:
 
-- **Loop skills** — `i2e`, `i2e-intent`, `i2e-develop`, `i2e-evidence`,
-  `i2e-adapt`, `i2e-report`, `i2e-serve`
+- **Loop skills** — `i2e`, `i2e-intent`, `i2e-spec`, `i2e-develop`,
+  `i2e-evidence`, `i2e-adapt`, `i2e-report`, `i2e-serve`,
+  `i2e-regression`, `i2e-watch`
 - **Reference providers** — `i2e-provider-pytest`, `i2e-provider-human`,
   `i2e-provider-ga`, `i2e-provider-datadog`, `i2e-provider-sentry`,
   `i2e-provider-survey`
@@ -255,7 +256,7 @@ def _plugin_readme() -> str:
     return f"""# i2e plugin
 
 A Claude Code plugin that ships the Intent-to-Evidence (Simplified) SDLC as
-13 model-invoked skills.
+16 model-invoked skills.
 
 ## What it does
 

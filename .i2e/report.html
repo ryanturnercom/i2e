@@ -489,7 +489,7 @@
   <div>
     <h1><span class="logo">i2e</span> <span class="banner-meta">— intent-based_simplified report</span></h1>
     <div class="banner-meta">
-      Generated at 2026-05-22 02:20:40Z · last tick 2026-05-22-df383a
+      Generated at 2026-05-22 13:31:42Z · last tick 2026-05-22-a70668
       <span id="live-stamp" class="live-stamp" title="Live update received from i2e-serve"></span>
     </div>
   </div>
@@ -503,6 +503,83 @@
   </div>
 </header>
 <main>
+
+<section class="notifications" id="notifications" aria-label="What needs you">
+  <header class="notifications-header">
+    <h2 class="notifications-title">What needs you</h2>
+    <span class="notifications-count">6</span>
+  </header>
+  <ul class="notifications-list">
+    
+    
+      
+        <li class="notification-watcher-divider">watcher @me</li>
+        
+      
+      <li class="notification notification-pending" id="notif/light-and-dark-mode/theme-visible-in-tweak-menu">
+        <span class="notification-kind kind-pending">pending</span>
+        <a class="notification-link" href="#pending/2026-05-22-light-and-dark-mode-theme-visible-in-tweak-menu.yaml">
+          <span class="notification-cap">light-and-dark-mode</span>
+          <span class="notification-message">awaiting human: Open the console and click the gear icon to open the Tweaks panel. Confirm a Light/Dark mode (theme) control is listed there alongside Density, Sidebar, etc., switch it to Dark, then reload the page. Is the theme control present and does the Dark choice survive the refresh?</span>
+        </a>
+      </li>
+    
+      
+        <li class="notification-watcher-divider">watcher @ryan</li>
+        
+      
+      <li class="notification notification-pending" id="notif/serve-autoreload/autoreload-end-to-end">
+        <span class="notification-kind kind-pending">pending</span>
+        <a class="notification-link" href="#pending/2026-05-22-serve-autoreload-autoreload-end-to-end.yaml">
+          <span class="notification-cap">serve-autoreload</span>
+          <span class="notification-message">awaiting human: With serve.autoreload enabled in .i2e/config.yaml, start the server and edit a console source file (e.g. add a comment to shell.py). Does the server restart on its own and the page reload, without you touching the terminal?</span>
+        </a>
+      </li>
+    
+      
+      <li class="notification notification-pending" id="notif/serve-restart-button/restart-end-to-end">
+        <span class="notification-kind kind-pending">pending</span>
+        <a class="notification-link" href="#pending/2026-05-22-serve-restart-button-restart-end-to-end.yaml">
+          <span class="notification-cap">serve-restart-button</span>
+          <span class="notification-message">awaiting human: Click the Restart button in the Tweaks panel. Does the server restart in place and the page reload itself after about 10 seconds?</span>
+        </a>
+      </li>
+    
+      
+        <li class="notification-watcher-divider">watcher @me</li>
+        
+      
+      <li class="notification notification-intervention" id="notif/light-and-dark-mode/theme-visible-in-tweak-menu">
+        <span class="notification-kind kind-intervention">intervention</span>
+        <a class="notification-link" href="#item/light-and-dark-mode/theme-visible-in-tweak-menu">
+          <span class="notification-cap">light-and-dark-mode</span>
+          <span class="notification-message">target theme-visible-in-tweak-menu needs human intervention</span>
+        </a>
+      </li>
+    
+      
+        <li class="notification-watcher-divider">watcher @ryan</li>
+        
+      
+      <li class="notification notification-intervention" id="notif/serve-autoreload/autoreload-end-to-end">
+        <span class="notification-kind kind-intervention">intervention</span>
+        <a class="notification-link" href="#item/serve-autoreload/autoreload-end-to-end">
+          <span class="notification-cap">serve-autoreload</span>
+          <span class="notification-message">target autoreload-end-to-end needs human intervention</span>
+        </a>
+      </li>
+    
+      
+      <li class="notification notification-intervention" id="notif/serve-restart-button/restart-end-to-end">
+        <span class="notification-kind kind-intervention">intervention</span>
+        <a class="notification-link" href="#item/serve-restart-button/restart-end-to-end">
+          <span class="notification-cap">serve-restart-button</span>
+          <span class="notification-message">target restart-end-to-end needs human intervention</span>
+        </a>
+      </li>
+    
+  </ul>
+</section>
 
 
 <nav class="idea-nav" aria-label="IDEA loop">
@@ -541,8 +618,249 @@
 
   <h3 class="idea-subheading">Active capabilities</h3>
   
-    <section class="card"><em>No active capabilities yet.</em></section>
   
+  <section class="card" id="cap/light-and-dark-mode">
+    <h3>light-and-dark-mode <span class="cap-meta">— v4 · active · watcher @me</span></h3>
+    <div class="status-controls" data-slug="light-and-dark-mode" data-status="active">
+      <button type="button" class="status-btn demote" data-action="demote">Demote</button>
+      <button type="button" class="status-btn promote" data-action="promote">Promote</button>
+    </div>
+    <div class="summary-line">
+      awaiting_human: 1 · pass: 2
+    </div>
+    <details class="case-details">
+      <summary>Cases &amp; constraints (3)</summary>
+      <div class="item-grid">
+        
+        <div class="item" id="item/light-and-dark-mode/light-and-dark-mode-implemented">
+          <div class="item-row">
+            <span class="id">light-and-dark-mode-implemented</span>
+            <span class="type">case · pytest</span>
+            <span class="pill pass">pass</span>
+            <span class="meta">
+              0/6 retries
+               · last 2026-05-22 13:25:15Z
+              
+            </span>
+          </div>
+          <div class="item-query"><span class="kv-label">query</span> <code>tests/console/test_tweaks.py::test_theme_axis_present_and_persists</code></div>
+          <div class="item-expect"><span class="kv-label">expect</span> <code>passes</code></div>
+          
+        </div>
+        
+        <div class="item" id="item/light-and-dark-mode/theme-axis-in-panel">
+          <div class="item-row">
+            <span class="id">theme-axis-in-panel</span>
+            <span class="type">case · pytest</span>
+            <span class="pill pass">pass</span>
+            <span class="meta">
+              0/6 retries
+               · last 2026-05-22 13:25:15Z
+              
+            </span>
+          </div>
+          <div class="item-query"><span class="kv-label">query</span> <code>tests/console/test_tweaks.py::test_theme_axis_in_panel</code></div>
+          <div class="item-expect"><span class="kv-label">expect</span> <code>passes</code></div>
+          
+        </div>
+        
+        <div class="item" id="item/light-and-dark-mode/theme-visible-in-tweak-menu">
+          <div class="item-row">
+            <span class="id">theme-visible-in-tweak-menu</span>
+            <span class="type">target · human</span>
+            <span class="pill awaiting">awaiting</span>
+            <span class="meta">
+              0/1 retries
+              
+               · pending 2026-05-22-light-and-dark-mode-theme-visible-in-tweak-menu.yaml
+            </span>
+          </div>
+          <div class="item-query"><span class="kv-label">query</span> <code>Open the console and click the gear icon to open the Tweaks panel. Confirm a Light/Dark mode (theme) control is listed there alongside Density, Sidebar, etc., switch it to Dark, then reload the page. Is the theme control present and does the Dark choice survive the refresh?</code></div>
+          <div class="item-expect"><span class="kv-label">expect</span> <code>yes — the Tweaks panel shows a Light/Dark theme control and the chosen mode survives a page refresh</code></div>
+          
+        </div>
+        
+      </div>
+    </details>
+  </section>
+  
+  <section class="card" id="cap/serve-autoreload">
+    <h3>serve-autoreload <span class="cap-meta">— v2 · active · watcher @ryan</span></h3>
+    <div class="status-controls" data-slug="serve-autoreload" data-status="active">
+      <button type="button" class="status-btn demote" data-action="demote">Demote</button>
+      <button type="button" class="status-btn promote" data-action="promote">Promote</button>
+    </div>
+    <div class="summary-line">
+      awaiting_human: 1 · pass: 4
+    </div>
+    <details class="case-details">
+      <summary>Cases &amp; constraints (5)</summary>
+      <div class="item-grid">
+        
+        <div class="item" id="item/serve-autoreload/autoreload-config-defaults-off">
+          <div class="item-row">
+            <span class="id">autoreload-config-defaults-off</span>
+            <span class="type">case · pytest</span>
+            <span class="pill pass">pass</span>
+            <span class="meta">
+              0/3 retries
+               · last 2026-05-22 13:41:25Z
+              
+            </span>
+          </div>
+          <div class="item-query"><span class="kv-label">query</span> <code>tests/test_config.py::test_autoreload_defaults_off</code></div>
+          <div class="item-expect"><span class="kv-label">expect</span> <code>passes</code></div>
+          
+        </div>
+        
+        <div class="item" id="item/serve-autoreload/autoreload-end-to-end">
+          <div class="item-row">
+            <span class="id">autoreload-end-to-end</span>
+            <span class="type">target · human</span>
+            <span class="pill awaiting">awaiting</span>
+            <span class="meta">
+              0/1 retries
+              
+               · pending 2026-05-22-serve-autoreload-autoreload-end-to-end.yaml
+            </span>
+          </div>
+          <div class="item-query"><span class="kv-label">query</span> <code>With serve.autoreload enabled in .i2e/config.yaml, start the server and edit a console source file (e.g. add a comment to shell.py). Does the server restart on its own and the page reload, without you touching the terminal?</code></div>
+          <div class="item-expect"><span class="kv-label">expect</span> <code>yes — the server re-execs in the same terminal within a second or two of the save and the browser reloads itself</code></div>
+          
+        </div>
+        
+        <div class="item" id="item/serve-autoreload/autoreload-watches-code-dir">
+          <div class="item-row">
+            <span class="id">autoreload-watches-code-dir</span>
+            <span class="type">case · pytest</span>
+            <span class="pill pass">pass</span>
+            <span class="meta">
+              0/6 retries
+               · last 2026-05-22 13:41:26Z
+              
+            </span>
+          </div>
+          <div class="item-query"><span class="kv-label">query</span> <code>tests/serve/test_autoreload.py::test_autoreload_watches_code_dir</code></div>
+          <div class="item-expect"><span class="kv-label">expect</span> <code>passes</code></div>
+          
+        </div>
+        
+        <div class="item" id="item/serve-autoreload/code-change-triggers-reexec">
+          <div class="item-row">
+            <span class="id">code-change-triggers-reexec</span>
+            <span class="type">case · pytest</span>
+            <span class="pill pass">pass</span>
+            <span class="meta">
+              0/6 retries
+               · last 2026-05-22 13:41:27Z
+              
+            </span>
+          </div>
+          <div class="item-query"><span class="kv-label">query</span> <code>tests/serve/test_autoreload.py::test_code_change_triggers_reexec</code></div>
+          <div class="item-expect"><span class="kv-label">expect</span> <code>passes</code></div>
+          
+        </div>
+        
+        <div class="item" id="item/serve-autoreload/static-assets-no-store">
+          <div class="item-row">
+            <span class="id">static-assets-no-store</span>
+            <span class="type">case · pytest</span>
+            <span class="pill pass">pass</span>
+            <span class="meta">
+              0/3 retries
+               · last 2026-05-22 13:41:27Z
+              
+            </span>
+          </div>
+          <div class="item-query"><span class="kv-label">query</span> <code>tests/serve/test_autoreload.py::test_static_assets_served_no_store</code></div>
+          <div class="item-expect"><span class="kv-label">expect</span> <code>passes</code></div>
+          
+        </div>
+        
+      </div>
+    </details>
+  </section>
+  
+  <section class="card" id="cap/serve-restart-button">
+    <h3>serve-restart-button <span class="cap-meta">— v1 · active · watcher @ryan</span></h3>
+    <div class="status-controls" data-slug="serve-restart-button" data-status="active">
+      <button type="button" class="status-btn demote" data-action="demote">Demote</button>
+      <button type="button" class="status-btn promote" data-action="promote">Promote</button>
+    </div>
+    <div class="summary-line">
+      awaiting_human: 1 · pass: 3
+    </div>
+    <details class="case-details">
+      <summary>Cases &amp; constraints (4)</summary>
+      <div class="item-grid">
+        
+        <div class="item" id="item/serve-restart-button/client-reloads-after-delay">
+          <div class="item-row">
+            <span class="id">client-reloads-after-delay</span>
+            <span class="type">case · pytest</span>
+            <span class="pill pass">pass</span>
+            <span class="meta">
+              0/6 retries
+               · last 2026-05-22 13:31:42Z
+              
+            </span>
+          </div>
+          <div class="item-query"><span class="kv-label">query</span> <code>tests/console/test_restart.py::test_restart_button_reloads_after_10s</code></div>
+          <div class="item-expect"><span class="kv-label">expect</span> <code>passes</code></div>
+          
+        </div>
+        
+        <div class="item" id="item/serve-restart-button/restart-button-renders">
+          <div class="item-row">
+            <span class="id">restart-button-renders</span>
+            <span class="type">case · pytest</span>
+            <span class="pill pass">pass</span>
+            <span class="meta">
+              0/6 retries
+               · last 2026-05-22 13:31:40Z
+              
+            </span>
+          </div>
+          <div class="item-query"><span class="kv-label">query</span> <code>tests/console/test_restart.py::test_tweaks_panel_has_restart_button</code></div>
+          <div class="item-expect"><span class="kv-label">expect</span> <code>passes</code></div>
+          
+        </div>
+        
+        <div class="item" id="item/serve-restart-button/restart-end-to-end">
+          <div class="item-row">
+            <span class="id">restart-end-to-end</span>
+            <span class="type">target · human</span>
+            <span class="pill awaiting">awaiting</span>
+            <span class="meta">
+              0/1 retries
+              
+               · pending 2026-05-22-serve-restart-button-restart-end-to-end.yaml
+            </span>
+          </div>
+          <div class="item-query"><span class="kv-label">query</span> <code>Click the Restart button in the Tweaks panel. Does the server restart in place and the page reload itself after about 10 seconds?</code></div>
+          <div class="item-expect"><span class="kv-label">expect</span> <code>yes — the server re-execs in the same terminal and the page reloads on its own roughly 10s later, showing the fresh server</code></div>
+          
+        </div>
+        
+        <div class="item" id="item/serve-restart-button/restart-endpoint-reexecs">
+          <div class="item-row">
+            <span class="id">restart-endpoint-reexecs</span>
+            <span class="type">case · pytest</span>
+            <span class="pill pass">pass</span>
+            <span class="meta">
+              0/6 retries
+               · last 2026-05-22 13:31:41Z
+              
+            </span>
+          </div>
+          <div class="item-query"><span class="kv-label">query</span> <code>tests/console/test_restart.py::test_restart_endpoint_triggers_reexec</code></div>
+          <div class="item-expect"><span class="kv-label">expect</span> <code>passes</code></div>
+          
+        </div>
+        
+      </div>
+    </details>
+  </section>
   
 
   
@@ -1820,27 +2138,39 @@
     </details>
   </section>
   
-  <section class="card shipped" id="shipped/light-and-dark-mode">
-    <h3>light-and-dark-mode <span class="cap-meta">— v1 · shipped · watcher @me</span></h3>
-    <div class="status-controls" data-slug="light-and-dark-mode" data-status="shipped">
+  <section class="card shipped" id="shipped/remove-dashboard-tweak">
+    <h3>remove-dashboard-tweak <span class="cap-meta">— v1 · shipped · watcher @ryan</span></h3>
+    <div class="status-controls" data-slug="remove-dashboard-tweak" data-status="shipped">
       <button type="button" class="status-btn demote" data-action="demote">Demote</button>
       <button type="button" class="status-btn promote" data-action="promote">Promote</button>
     </div>
     <div class="summary-line">
-      <span class="pill pass">pass: 1</span>
+      <span class="pill pass">pass: 2</span>
     </div>
     <details class="case-details">
-      <summary>Cases &amp; constraints (1)</summary>
+      <summary>Cases &amp; constraints (2)</summary>
       <div class="item-grid">
         
-        <div class="item" id="shipped-item/light-and-dark-mode/light-and-dark-mode-implemented">
+        <div class="item" id="shipped-item/remove-dashboard-tweak/dashboard-axis-absent">
           <div class="item-row">
-            <span class="id">light-and-dark-mode-implemented</span>
+            <span class="id">dashboard-axis-absent</span>
             <span class="type">case · pytest</span>
             <span class="pill pass">pass</span>
             <span class="meta">
               0/6 retries
-               · last 2026-05-22 02:20:40Z
+               · last 2026-05-22 13:27:54Z
+            </span>
+          </div>
+        </div>
+        
+        <div class="item" id="shipped-item/remove-dashboard-tweak/dashboard-pref-key-removed">
+          <div class="item-row">
+            <span class="id">dashboard-pref-key-removed</span>
+            <span class="type">case · pytest</span>
+            <span class="pill pass">pass</span>
+            <span class="meta">
+              0/6 retries
+               · last 2026-05-22 13:27:55Z
             </span>
           </div>
         </div>
@@ -2281,7 +2611,13 @@
   <h3 class="idea-subheading">Live status</h3>
   <section class="card live-panel" id="live-status">
     
-      <div class="live-empty">Nothing in flight. Idle — next tick will pick up where the loop left off.</div>
+      <div class="live-summary" id="parallelism-summary">
+        <span class="live-count"><strong>0</strong> in flight</span>
+        <span class="live-count"><strong>0</strong> agents</span>
+        <span class="live-count"><strong>3</strong> awaiting human</span>
+      </div>
+      
+      
     
   </section>
 </section>
@@ -2292,12 +2628,114 @@
     <div class="evidence-roll">
     
     
-      <span class="pill pass">0 pass</span>
+      
+        
+        
+        
+        
+        
+        
+        
+      
+        
+        
+        
+        
+        
+        
+        
+      
+        
+        
+        
+        
+        
+        
+        
+      
+    
+      
+        
+        
+        
+        
+        
+        
+        
+      
+        
+        
+        
+        
+        
+        
+        
+      
+        
+        
+        
+        
+        
+        
+        
+      
+        
+        
+        
+        
+        
+        
+        
+      
+        
+        
+        
+        
+        
+        
+        
+      
+    
+      
+        
+        
+        
+        
+        
+        
+        
+      
+        
+        
+        
+        
+        
+        
+        
+      
+        
+        
+        
+        
+        
+        
+        
+      
+        
+        
+        
+        
+        
+        
+        
+      
+    
+      <span class="pill pass">9 pass</span>
       <span class="pill met">0 met</span>
       <span class="pill fail">0 fail</span>
       <span class="pill unmet">0 unmet</span>
       <span class="pill trending">0 trending</span>
-      <span class="pill awaiting">0 awaiting</span>
+      <span class="pill awaiting">3 awaiting</span>
       <span class="pill none">0 no data</span>
     </div>
     <div class="evidence-hint">Drill into any active capability above to see the failing query and last value.</div>
@@ -2308,12 +2746,72 @@
   <h2 class="idea-heading"><span class="idea-letter-inline">A</span> Adapt <span class="idea-tagline">— what needs human input</span></h2>
   <h3 class="idea-subheading">Pending queue</h3>
   
-    <section class="card"><em>No open pending files.</em></section>
   
+  <details class="card" id="pending/2026-05-22-light-and-dark-mode-theme-visible-in-tweak-menu.yaml">
+    <summary>2026-05-22-light-and-dark-mode-theme-visible-in-tweak-menu.yaml <span class="cap-meta">— human_evaluation · light-and-dark-mode/theme-visible-in-tweak-menu · open</span></summary>
+    <div><strong>ask:</strong> Open the console and click the gear icon to open the Tweaks panel. Confirm a Light/Dark mode (theme) control is listed there alongside Density, Sidebar, etc., switch it to Dark, then reload the page. Is the theme control present and does the Dark choice survive the refresh?</div>
+    
+      <div class="cap-meta">options: yes, no, partial</div>
+    
+    <textarea class="resolution" placeholder="resolution: (edit and save)"></textarea>
+  </details>
+  
+  <details class="card" id="pending/2026-05-22-serve-autoreload-autoreload-end-to-end.yaml">
+    <summary>2026-05-22-serve-autoreload-autoreload-end-to-end.yaml <span class="cap-meta">— human_evaluation · serve-autoreload/autoreload-end-to-end · open</span></summary>
+    <div><strong>ask:</strong> With serve.autoreload enabled in .i2e/config.yaml, start the server and edit a console source file (e.g. add a comment to shell.py). Does the server restart on its own and the page reload, without you touching the terminal?</div>
+    
+      <div class="cap-meta">options: yes, no, partial</div>
+    
+    <textarea class="resolution" placeholder="resolution: (edit and save)"></textarea>
+  </details>
+  
+  <details class="card" id="pending/2026-05-22-serve-restart-button-restart-end-to-end.yaml">
+    <summary>2026-05-22-serve-restart-button-restart-end-to-end.yaml <span class="cap-meta">— human_evaluation · serve-restart-button/restart-end-to-end · open</span></summary>
+    <div><strong>ask:</strong> Click the Restart button in the Tweaks panel. Does the server restart in place and the page reload itself after about 10 seconds?</div>
+    
+      <div class="cap-meta">options: yes, no, partial</div>
+    
+    <textarea class="resolution" placeholder="resolution: (edit and save)"></textarea>
+  </details>
   
 
   <h3 class="idea-subheading">Recent ticks</h3>
   
+  
+  <article class="card tick" id="tick/2026-05-22-a70668">
+    <div class="tick-header">2026-05-22-a70668 <span class="cap-meta">— 2026-05-22 13:31:42Z</span></div>
+    <ul>
+      <li>ran_develop: serve-restart-button (LLM-driven; subprocess hook deferred)</li><li>ran_evidence: serve-restart-button (3 pass, 0 trending, 0 fail)</li>
+    </ul>
+  </article>
+  
+  <article class="card tick" id="tick/2026-05-22-38330f">
+    <div class="tick-header">2026-05-22-38330f <span class="cap-meta">— 2026-05-22 13:27:55Z</span></div>
+    <ul>
+      <li>ran_develop: remove-dashboard-tweak (LLM-driven; subprocess hook deferred)</li><li>ran_evidence: remove-dashboard-tweak (2 pass, 0 trending, 0 fail)</li><li>promoted_to_shipped: remove-dashboard-tweak</li>
+    </ul>
+  </article>
+  
+  <article class="card tick" id="tick/2026-05-22-02bba7">
+    <div class="tick-header">2026-05-22-02bba7 <span class="cap-meta">— 2026-05-22 13:25:16Z</span></div>
+    <ul>
+      <li>ran_develop: light-and-dark-mode (LLM-driven; subprocess hook deferred)</li><li>ran_evidence: light-and-dark-mode (2 pass, 0 trending, 0 fail)</li>
+    </ul>
+  </article>
+  
+  <article class="card tick" id="tick/2026-05-22-f9dbe6">
+    <div class="tick-header">2026-05-22-f9dbe6 <span class="cap-meta">— 2026-05-22 02:44:30Z</span></div>
+    <ul>
+      <li>ran_develop: light-and-dark-mode (LLM-driven; subprocess hook deferred)</li><li>ran_evidence: light-and-dark-mode (1 pass, 0 trending, 0 fail)</li>
+    </ul>
+  </article>
+  
+  <article class="card tick" id="tick/2026-05-22-84e646">
+    <div class="tick-header">2026-05-22-84e646 <span class="cap-meta">— 2026-05-22 02:28:27Z</span></div>
+    <ul>
+      <li>regression: scope=slug:light-and-dark-mode caps=1 demoted=0</li>
+    </ul>
+  </article>
   
   <article class="card tick" id="tick/2026-05-22-df383a">
     <div class="tick-header">2026-05-22-df383a <span class="cap-meta">— 2026-05-22 02:20:40Z</span></div>
@@ -2347,41 +2845,6 @@
     <div class="tick-header">2026-05-22-9a5f2c <span class="cap-meta">— 2026-05-22 02:04:14Z</span></div>
     <ul>
       <li>ran_adapt: console-workers-logs-specs-evidence (retries=1, escalations=0)</li>
-    </ul>
-  </article>
-  
-  <article class="card tick" id="tick/2026-05-22-276624">
-    <div class="tick-header">2026-05-22-276624 <span class="cap-meta">— 2026-05-22 02:03:24Z</span></div>
-    <ul>
-      <li>applied_resolution: console-workers-logs-specs-evidence / reconcile-creates-draft-for-new-section</li><li>applied_resolution: console-workers-logs-specs-evidence / regression-flip-demotes-shipped</li>
-    </ul>
-  </article>
-  
-  <article class="card tick" id="tick/2026-05-22-d4f78f">
-    <div class="tick-header">2026-05-22-d4f78f <span class="cap-meta">— 2026-05-22 01:57:49Z</span></div>
-    <ul>
-      <li>reconcile: spec=i2e-console actions=4</li><li>  add: light-and-dark-mode (new section in spec)</li><li>  edit: console-foundation (section body changed)</li><li>  edit: console-intent-and-writes (section body changed)</li><li>  edit: console-workers-logs-specs-evidence (section body changed)</li>
-    </ul>
-  </article>
-  
-  <article class="card tick" id="tick/2026-05-22-f50a06">
-    <div class="tick-header">2026-05-22-f50a06 <span class="cap-meta">— 2026-05-22 01:56:38Z</span></div>
-    <ul>
-      <li>reconcile: spec=i2e-console actions=4</li><li>  add: light-and-dark-mode (new section in spec)</li><li>  edit: console-foundation (section body changed)</li><li>  edit: console-intent-and-writes (section body changed)</li><li>  edit: console-workers-logs-specs-evidence (section body changed)</li>
-    </ul>
-  </article>
-  
-  <article class="card tick" id="tick/2026-05-22-2ec278">
-    <div class="tick-header">2026-05-22-2ec278 <span class="cap-meta">— 2026-05-22 01:56:23Z</span></div>
-    <ul>
-      <li>reconcile: spec=i2e-console actions=4</li><li>  add: light-and-dark-mode (new section in spec)</li><li>  edit: console-foundation (section body changed)</li><li>  edit: console-intent-and-writes (section body changed)</li><li>  edit: console-workers-logs-specs-evidence (section body changed)</li>
-    </ul>
-  </article>
-  
-  <article class="card tick" id="tick/2026-05-22-e442bf">
-    <div class="tick-header">2026-05-22-e442bf <span class="cap-meta">— 2026-05-22 01:28:34Z</span></div>
-    <ul>
-      <li>ran_develop: console-workers-logs-specs-evidence (reconcile job now materialises new spec sections as draft intents)</li><li>ran_evidence: console-workers-logs-specs-evidence (15 pass, 0 fail; reconcile-creates-draft-for-new-section -&gt; awaiting_human)</li>
     </ul>
   </article>
   

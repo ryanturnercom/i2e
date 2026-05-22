@@ -28,7 +28,7 @@ from i2e_core.provider.discovery import (
 def _make_item(item_id: str = "human-1") -> EvidenceItem:
     return EvidenceItem(
         id=item_id,
-        type="case",
+        type="target",
         provider="human",
         query="Did this feel right?",
         expect="yes",

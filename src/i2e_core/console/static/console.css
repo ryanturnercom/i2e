@@ -705,6 +705,14 @@ table.logs-table tbody tr:hover { background: var(--surface-hover); }
   background: var(--card); color: var(--heading); cursor: pointer;
 }
 .tweak-hint { font-size: 10px; color: var(--muted); }
+.tweak-restart {
+  padding: 8px 10px; font: inherit; font-size: 11px; font-weight: 600;
+  color: var(--heading); background: var(--surface-subtle);
+  border: 1px solid var(--border); border-radius: 6px;
+  cursor: pointer; text-align: center;
+}
+.tweak-restart:hover { background: var(--surface-hover); }
+.tweak-restart:disabled { opacity: 0.6; cursor: default; }
 
 /* ───────────── Density ───────────── */
 .density-dense .content { padding: 18px 24px 60px; }

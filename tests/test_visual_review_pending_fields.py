@@ -164,10 +164,11 @@ def test_visual_target_blocks_shippable_until_human_resolves(tmp_path: Path) -> 
     with pytest.raises(ValueError):
         resolve_to_verdict(pf)
 
-    # Once the human flips status=resolved + resolution=yes, we get a pass.
+    # Once the human flips status=resolved + resolution=yes, we get a met
+    # verdict (a human item is always a target).
     pf_resolved = pf.model_copy(update={"status": "resolved", "resolution": "yes"})
     verdict = resolve_to_verdict(pf_resolved)
-    assert verdict.verdict == "pass"
+    assert verdict.verdict == "met"
 
 
 def test_visual_fields_default_to_absent() -> None:

@@ -1,0 +1,26 @@
+run_id: 2026-05-22-ab9f32
+capability: light-and-dark-mode
+intent_version: 4
+collected_at: '2026-05-22T13:25:15.996990Z'
+items:
+  light-and-dark-mode-implemented:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-22T13:25:15.620378Z'
+    pending: null
+    raw: {}
+  theme-visible-in-tweak-menu:
+    verdict: awaiting_human
+    value: null
+    attempts_used: 0
+    last_observed: null
+    pending: 2026-05-22-light-and-dark-mode-theme-visible-in-tweak-menu.yaml
+    raw: {}
+  theme-axis-in-panel:
+    verdict: pass
+    value: null
+    attempts_used: 0
+    last_observed: '2026-05-22T13:25:15.996990Z'
+    pending: null
+    raw: {}

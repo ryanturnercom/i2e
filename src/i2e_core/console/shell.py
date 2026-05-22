@@ -29,11 +29,6 @@ _TWEAK_AXES = (
         "Sidebar",
         (("grouped", "Grouped"), ("flat", "Flat"), ("tree", "Tree by spec")),
     ),
-    (
-        "dashboard",
-        "Dashboard",
-        (("cockpit", "Cockpit"), ("arc", "IDEA arc"), ("inbox", "Inbox")),
-    ),
     ("intent", "Intent detail", (("split", "Split"), ("single", "Single"))),
     ("logs", "Logs default", (("timeline", "Timeline"), ("table", "Table"))),
 )
@@ -78,13 +73,26 @@ def _tweaks_panel(prefs: dict[str, str]) -> str:
             f'<label class="tweak-row"><span>{ui.esc(label)}</span>'
             f'<select name="{key}">{options}</select></label>'
         )
+    rows.append(
+        '<div class="tweak-hint">saved to the i2e_console_prefs cookie</div>'
+    )
+    # Server section — a plain type="button" so it never submits the
+    # layout-prefs form it sits inside; console.js owns the click.
+    rows.append('<div class="tweak-section">Server</div>')
+    rows.append(
+        '<button type="button" class="tweak-restart" id="restart-server"'
+        ' data-restart-url="/restart" data-reload-delay="10000">'
+        "Restart server</button>"
+    )
+    rows.append(
+        '<div class="tweak-hint">restarts i2e-serve, then reloads in 10s</div>'
+    )
     return (
         '<details class="tweaks-panel" id="tweaks-panel">'
         '<summary title="Layout tweaks">&#9881;</summary>'
         '<form hx-post="/api/prefs" hx-trigger="change">'
         + "".join(rows)
-        + '<div class="tweak-hint">saved to the i2e_console_prefs cookie</div>'
-        "</form></details>"
+        + "</form></details>"
     )
 
 

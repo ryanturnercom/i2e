@@ -25,3 +25,4 @@ scheduler:                         # advisory only
 serve:                             # i2e-serve localhost server
   port: 4230                       # static port; pick any free TCP port
   open_browser: true               # open the URL in the default browser on start
+  autoreload: true                 # re-exec the server when i2e_core code changes

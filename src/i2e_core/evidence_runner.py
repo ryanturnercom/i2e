@@ -193,9 +193,10 @@ def _handle_file_exists(
     # Resolved → translate, archive, return real verdict.
     verdict = resolve_to_verdict(pf)
     archive_pending(root, pending_path)
-    # Preserve attempts_used semantics: a `pass` does not bump attempts; a
-    # `fail` resolution does.
-    if verdict.verdict == "pass":
+    # Preserve attempts_used semantics: a passing verdict (pass / met) does
+    # not bump attempts; a non-passing resolution (fail / unmet / trending)
+    # does. Human resolutions are always Target-shaped (spec §2.2).
+    if verdict.verdict in ("pass", "met"):
         return verdict.model_copy(update={"attempts_used": prev_attempts})
     return verdict.model_copy(update={"attempts_used": prev_attempts + 1})
 

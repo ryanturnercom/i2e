@@ -136,18 +136,37 @@ every other status edit flows through `i2e-intent`.
 
 ### 2.2 Case vs. Target — the deciding test
 
-> **Can the agent get a verdict right now, from the system alone?**
+> **Can the agent close this verdict itself, right now, with no external
+> dependency?**
+
+That one question is the whole distinction. It is a question about the
+*source* of the verdict, not its shape.
+
+- **Yes → Case.** The agent runs a check it fully controls — a unit or
+  integration test, an API probe, a schema check, a lint or type-check.
+  Synchronous, deterministic, repeatable on demand.
+- **No → Target.** The verdict is out of the agent's reach for exactly one
+  of three reasons: an external **provider** holds the data, **time** must
+  elapse before the measurement means anything, or a **human** must judge
+  it. Observed, not executed.
 
 | | **Case** | **Target** |
 |---|---|---|
-| Evidence is | Generated immediately, programmatically | Observed — needs time, a 3rd-party provider, or a human subject |
+| Verdict source | The agent itself, programmatically | A provider, the passage of time, or a human |
 | The agent... | Executes it; gets pass/fail now | Waits for it; reads a result later |
-| Examples | unit test, API probe, schema check, lint | Datadog usage trend, Sentry error rate, NPS, user interview |
+| Examples | unit test, API probe, schema check, lint | Datadog usage trend, Sentry error rate, NPS survey, user interview |
 | Role in loop | **Gates the ship** at build time | **Measured after ship**, feeds Adapt |
-| Provider returns | `pass` / `fail` | a value vs. `threshold` → `met` / `unmet` / `trending` |
+| Verdict shape | `pass` / `fail` | a value vs. `threshold` → `met` / `unmet` / `trending` |
+
+**Anything a human must judge is a Target.** A person cannot deliver a
+verdict "right now, from the system alone" — soliciting their judgment
+means waiting. So a subjective acceptance check, an NPS score, or a user
+interview is always `type: target`, never a case. Forced-evidence rule 5
+(§5) rejects a human/subjective provider named on a case or a constraint.
 
 **Constraints** use the same item shape; they're invariants ("never X")
-rather than success criteria. They gate the ship too.
+rather than success criteria. They gate the ship too — so, like cases,
+they must be agent-checkable; a constraint may not name a human provider.
 
 ### 2.3 Effort tiers
 
@@ -178,6 +197,10 @@ defaults:
 scheduler:                         # advisory only
   cadence: weekly
   via: claude-code-routine         # or windows-task-scheduler | launchd | cron | manual
+
+watch:                             # i2e-watch intent-change watcher
+  max_concurrent: 4                # capabilities developed in parallel per cycle
+  debounce_ms: 400                 # coalesce a burst of intent writes
 ```
 
 `lazy` is the explicit "don't auto-loop" escape hatch — useful when you'd
@@ -208,6 +231,7 @@ rather have a human decide than have the AI thrash.
 │   ├── report.html       static dashboard, regenerated on every state change
 │   ├── config.yaml       effort tiers, defaults, advisory scheduler
 │   ├── .preflight_cache.json  intent-mtime hash → last green PreflightResult (fast no-op tick)
+│   ├── .watch_state.json  i2e-watch's per-capability last-dispatched intent version
 │   └── .serve.url        present iff `i2e-serve` is up (written by serve, deleted on shutdown)
 ```
 
@@ -247,6 +271,7 @@ collect evidence. All follow the agentskills.io SKILL.md convention.
 | `i2e-report` | Render `.i2e/report.html` from current state. Auto-called by `i2e` after any state-changing tick. Deterministic Python, zero LLM tokens. |
 | `i2e-serve` | Optional. Start a tiny localhost HTTP server (127.0.0.1 only) with live SSE updates from `.i2e/` file changes. The `start` subcommand blocks until shutdown so backgrounding it yields a reachable URL; the SSE watcher filters out its own writes (`report.html`, `.tmp`, `.serve.url`) to avoid a self-refresh loop. |
 | `i2e-regression` | Periodic case + constraint re-validation for shipped (or active, or all) capabilities. Targets stay out of scope — branch 4's `window:` owns that path. A regression that flips any verdict to `fail`/`unmet`/`trending` demotes the owning shipped capability back to `active`. Cadence is BYO (`/schedule`, OS scheduler, manual). |
+| `i2e-watch` | Optional. Watches `.i2e/intents/` and, when a capability's intent `version` is bumped, dispatches `i2e-develop` + `i2e-evidence` for the changed-and-ready capabilities — up to `watch.max_concurrent` in parallel. Event-driven, not cadence-driven; complements (does not replace) the orchestrator and the BYO scheduler. See §6.5. |
 
 ### 4.2 Provider skills
 
@@ -258,8 +283,20 @@ Examples: `i2e-provider-pytest`, `i2e-provider-datadog`,
 Each provider skill takes one evidence item and returns a verdict:
 
 - For a Case: `{ verdict: pass | fail, output: "..." }`
-- For a Target: `{ value: <observed>, met: true | false | trending, observed_at: <iso> }`
+- For a Target: `{ value: <observed>, met: met | unmet | trending, observed_at: <iso> }`
 - For a Constraint: same shape as a Case.
+
+Providers fall into two families, matching §2.2's source axis:
+
+- **Case providers** run a check the agent fully controls and return a
+  verdict synchronously — `pytest` is the canonical one. The provider skill
+  is just uniform plumbing; the verdict source is still the agent itself.
+- **Target providers** reach outside the agent. Some query an external
+  system synchronously (`datadog`, `ga`, `sentry`); the **human/subjective**
+  ones (`human`, `survey`) cannot answer without a person, so they write a
+  pending file and return `awaiting_human` (§6.2). A human/subjective
+  provider may only serve a `type: target` item — never a case or a
+  constraint (§5, rule 5).
 
 **The installed skill set IS the provider registry.** To add Sentry, you
 install `i2e-provider-sentry`. No central config file.
@@ -281,6 +318,10 @@ orchestrator tick (in `i2e`'s preflight). A Capability is **invalid** if:
    every referenced slug must exist as an active capability. *You cannot
    depend on something that isn't real, and a cycle would deadlock the
    loop.*
+5. A human/subjective provider (`human`, `survey`) is named on anything
+   other than a `type: target` evidence item — i.e. on a case or a
+   constraint. *A human verdict cannot be had "right now, from the system
+   alone"; anything a person must judge is a Target (§2.2).*
 
 There are no other "ceremony" gates. Shipping is gated by **all Cases pass
 and all Constraints hold** in the latest `current.yaml`. Targets do not
@@ -445,6 +486,54 @@ can invoke an agent on a cadence works. Recommended patterns:
 
 The doc explicitly does not recommend CI-based scheduling or serverless
 cron — they introduce hosting dependencies I2E doesn't need.
+
+### 6.5 Watch mode — `i2e-watch`
+
+The scheduler (§6.4) drives the loop on a *cadence*. `i2e-watch` drives it
+on an *event*: an intent file changing. It is optional and complementary —
+not a replacement for the orchestrator or the scheduler.
+
+The watcher blocks on `.i2e/intents/`. When a capability's intent
+`version` is bumped, it dispatches `i2e-develop` + `i2e-evidence` for that
+capability — the same work `i2e` does for a branch-2 `DevelopAndEvidence`
+action, but triggered the moment the operator saves.
+
+**Trigger keys off `version`, not mtime.** A capability is dispatched only
+when its `version` exceeds the version last dispatched (recorded in
+`.i2e/.watch_state.json`). This is load-bearing:
+
+- The orchestrator rewrites intent files mid-develop (the `runtime:`
+  mirror, §6.3). An mtime-based watcher would see its own dispatch as a
+  fresh edit and loop forever. A `runtime:` write never bumps `version`.
+- A develop that fails does not re-trigger — its `version` is already
+  recorded. Retrying is an explicit human act: re-bump the intent. No
+  thrash, no runaway retry.
+
+**Concurrency.** `watch.max_concurrent` (`.i2e/config.yaml`, default `4`)
+caps how many capabilities one cycle develops in parallel. The batch is
+greedy-selected so no two members have overlapping `touches:` globs — the
+same conflict rule the swarm batch planner uses (§6.3). Triggers beyond
+the cap, or in a `touches:` conflict, wait for the next cycle.
+
+**Operator contract.** Watch mode does not change what `status:` means — it
+only removes the delay between "marked active" and "develop starts". The
+discipline it asks for is already the meaning of the status enum (§2.1):
+
+- The watcher treats both `draft → active` and a `version` bump on an
+  active intent as *"build this now"*. Keep a capability `draft` until it is
+  ready to be worked on — `draft` intents are skipped entirely (no trigger,
+  and editing one never wakes a dispatch), so a draft is a free scratchpad.
+- For a capability that is ready in principle but must wait on another, use
+  `depends_on:` rather than holding it in `draft`. The watcher respects the
+  graph — a child whose parent still needs develop is never dispatched.
+- **Bump `version` last.** On an already-active intent the *save* is the
+  trigger, so bump `version` (and `updated`) only once the edit is
+  complete. Preflight rejects a malformed intent before dispatch, but a
+  half-finished *valid* one would still build.
+
+`i2e-watch` runs until the operator stops it. The deterministic core
+(`i2e_core.watch`) only watches and plans; it never writes code and never
+calls an LLM. The skill performs the develop + evidence dispatch.
 
 ---
 
@@ -720,7 +809,7 @@ asynchronous because the agent has to *ask* and *wait*.
 ```markdown
 ---
 name: i2e-provider-human
-description: Collect subjective human acceptance for a Case or Target.
+description: Collect subjective human acceptance for a Target.
 license: Apache-2.0
 metadata:
   tier: provider
@@ -730,8 +819,9 @@ metadata:
 # i2e-provider-human
 
 ## When to use
-Use when an evidence item names `provider: human`. The verdict is a
-person's subjective judgment.
+Use when a **target** item names `provider: human`. The verdict is a
+person's subjective judgment — which is why a human item is always a
+Target, never a case (§2.2).
 
 ## Workflow
 
@@ -755,8 +845,8 @@ person's subjective judgment.
 
 ## Returns
 - `{ verdict: awaiting_human, pending: <filename> }` on first ask
-- `{ verdict: pass | fail, resolved_by: <watcher>, resolved_at: <iso> }`
-  after the human responds.
+- a Target verdict after the human responds — `yes` → `met`, `no` →
+  `unmet`, `partial` → `trending`.
 
 ## Notes
 - This provider pattern (write a pending file, return `awaiting_human`)
@@ -779,12 +869,13 @@ i2e-adapt            budgeted auto-improvement; pending on exhaustion
 i2e-report           render static .i2e/report.html (auto on tick)
 i2e-serve            optional localhost server with live SSE updates
 i2e-regression       periodic case re-run for shipped capabilities
+i2e-watch            watch intents; dispatch develop+evidence on change
 
 i2e-provider-pytest      cases, constraints — test runner
 i2e-provider-datadog     targets — metrics, latencies, counts
 i2e-provider-sentry      constraints, targets — error rates, PII leaks
 i2e-provider-ga          targets — funnel metrics, page events
-i2e-provider-human       cases, targets — subjective acceptance
+i2e-provider-human       targets — subjective acceptance
 i2e-provider-survey      targets — NPS, satisfaction
 i2e-provider-<your>      anything else — one skill per source
 ```

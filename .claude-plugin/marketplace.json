@@ -10,7 +10,7 @@
     {
       "name": "i2e",
       "source": "./dist/claude-plugin/plugins/i2e",
-      "description": "13 skills: orchestrator + intent/develop/evidence/adapt loop steps + 6 reference evidence providers.",
+      "description": "16 skills: orchestrator + intent/develop/evidence/adapt loop steps + 6 reference evidence providers.",
       "version": "0.1.4",
       "author": {
         "name": "Ryan Turner"

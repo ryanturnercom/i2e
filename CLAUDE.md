@@ -8,7 +8,7 @@ This is **Intent-to-Evidence (Simplified)** — a skills-driven SDLC where human
 src/i2e_core/         deterministic Python core (Pydantic v2 throughout)
 tests/                pytest suite — uses tmp_path; never touches real .i2e/
 .i2e/                 this project's own intents + evidence (dogfooded)
-.claude/skills/       7 loop skills + 6 provider skills (13 total)
+.claude/skills/       10 loop skills + 6 provider skills (16 total)
 .claude/commands/     slash commands (e.g. /release)
 .blueprints/          execution history; one folder per epic (09 total, all green)
 .documentation/       canonical spec — source of truth
@@ -60,6 +60,7 @@ Never edit `dist/` by hand; never skip hooks; never force-push.
 | `i2e` (orchestrator) | `.i2e/logs/**`, `.i2e/report.html`, the first-run `.i2e/` scaffold (layout dirs + serve/stop/restart scripts via `init_project`), plus whatever the dispatched skill writes |
 | `i2e-report` | `.i2e/report.html` only — deterministic Python, zero LLM tokens |
 | `i2e-serve` | nothing — advisory only (reports whether the server is up; never starts/stops it) |
+| `i2e-watch` | `.i2e/.watch_state.json` (watcher state, via `i2e_core.watch`), `.i2e/logs/**`, `.i2e/report.html`, plus whatever the develop/evidence skills it dispatches write |
 
 ## Provider contract (locked in epic 02)
 

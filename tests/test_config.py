@@ -88,3 +88,39 @@ def test_serve_partial_override(tmp_path: Path):
     assert cfg.serve.open_browser is False
     # Other sections still default
     assert cfg.defaults.case_effort == "medium"
+
+
+def test_autoreload_defaults_off():
+    # Auto-reload only earns its keep when dogfooding i2e on itself, so it
+    # is opt-in: a normal install must not pay for a code watcher.
+    assert config.default_config().serve.autoreload is False
+
+
+def test_autoreload_partial_override(tmp_path: Path):
+    (tmp_path / ".i2e").mkdir()
+    (tmp_path / ".i2e" / "config.yaml").write_text(
+        "serve:\n  autoreload: true\n", encoding="utf-8"
+    )
+    cfg = config.load_config(tmp_path)
+    assert cfg.serve.autoreload is True
+    # Untouched serve keys keep their defaults.
+    assert cfg.serve.port == 4230
+
+
+def test_watch_defaults():
+    cfg = config.default_config()
+    assert cfg.watch.max_concurrent == 4
+    assert cfg.watch.debounce_ms == 400
+
+
+def test_watch_partial_override(tmp_path: Path):
+    (tmp_path / ".i2e").mkdir()
+    (tmp_path / ".i2e" / "config.yaml").write_text(
+        "watch:\n  max_concurrent: 8\n", encoding="utf-8"
+    )
+    cfg = config.load_config(tmp_path)
+    assert cfg.watch.max_concurrent == 8
+    # Untouched watch keys keep their defaults.
+    assert cfg.watch.debounce_ms == 400
+    # Other sections still default.
+    assert cfg.serve.port == 4230

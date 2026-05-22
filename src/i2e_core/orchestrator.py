@@ -53,7 +53,7 @@ from typing import Literal, Union
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from . import adapt, evidence_runner
+from . import adapt
 from .config import load_config
 from .deps import build_graph, find_cycle, find_unknown_refs, ready_slugs
 from .develop import scoped_capabilities
@@ -63,8 +63,6 @@ from .intent import parse_intent
 from .paths import i2e_dir, intents_dir
 from .pending import list_resolved_pending
 from .provider.discovery import installed_provider_names
-from .report import render
-from .report.links import deep_link
 from .runid import new_run_id
 from .swarm import (
     acquire_claim,
@@ -75,6 +73,33 @@ from .swarm import (
 )
 from .tick_log import TickLog, write_tick
 from .validator import ValidationError, validate_capability_with_config
+
+
+# ---------- lazy heavy-dependency access (PEP 562) ----------
+#
+# `render`, `deep_link`, and `evidence_runner` are only needed on a
+# state-changing tick. Importing them at module load would drag the whole
+# report view-model and provider layer onto the cold-start path that every
+# no-op tick pays. A module-level __getattr__ defers each import to first
+# access while still exposing `orchestrator.<name>` — which keeps them
+# patchable as test seams (tests monkeypatch `i2e_core.orchestrator.render`
+# and `i2e_core.orchestrator.evidence_runner`).
+
+
+def __getattr__(name: str):
+    if name == "render":
+        from .report import render
+
+        return render
+    if name == "deep_link":
+        from .report.links import deep_link
+
+        return deep_link
+    if name == "evidence_runner":
+        from . import evidence_runner
+
+        return evidence_runner
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 # ---------- Window parsing ----------
@@ -687,6 +712,10 @@ def tick(root: Path) -> TickResult:
             actions_log.append(
                 f"ran_develop: {cap} (LLM-driven; subprocess hook deferred)"
             )
+            # Lazy import: a no-op (Shippable) tick never runs evidence, so
+            # this keeps evidence_runner off the cold-start import path.
+            from . import evidence_runner
+
             try:
                 summary = evidence_runner.run(root, cap)
                 actions_log.append(
@@ -723,6 +752,8 @@ def tick(root: Path) -> TickResult:
                 continue
 
     elif isinstance(action, ReEvaluateItem):
+        from . import evidence_runner  # lazy — see DevelopAndEvidence branch
+
         try:
             summary = evidence_runner.run(
                 root, action.capability, only_items=[action.item_id]
@@ -772,9 +803,13 @@ def tick(root: Path) -> TickResult:
     report_path: Path | None = None
     report_link: str | None = None
     if actions_log:
-        report_path = render(root)
+        # render() is resolved through this module (sys.modules) so a test's
+        # monkeypatch of `orchestrator.render` is honoured. The module-level
+        # __getattr__ keeps it lazily imported — a no-op tick skips this
+        # block and never pays the report-subsystem import cost.
+        report_path = sys.modules[__name__].render(root)
         focus = _focus_for_action(action, root)
-        report_link = deep_link(root, focus)
+        report_link = sys.modules[__name__].deep_link(root, focus)
 
     return TickResult(
         tick_id=tick_id,

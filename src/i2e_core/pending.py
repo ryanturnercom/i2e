@@ -156,13 +156,16 @@ def _try_numeric(s: str) -> float | None:
 def resolve_to_verdict(pf: PendingFile) -> ItemVerdict:
     """Translate a resolved pending file into an ``ItemVerdict``.
 
-    For ``kind="human_evaluation"``:
+    A ``human_evaluation`` pending always belongs to a Target (spec §2.2 —
+    anything a human must judge is a target), so the verdict is always
+    Target-shaped:
 
-    - ``resolution == "yes"`` → ``ItemVerdict(verdict="pass", ...)``
-    - ``resolution in {"no", "partial"}`` → ``ItemVerdict(verdict="fail", ...)``
+    - ``resolution == "yes"`` → ``ItemVerdict(verdict="met", ...)``
+    - ``resolution == "no"`` → ``ItemVerdict(verdict="unmet", ...)``
+    - ``resolution == "partial"`` → ``ItemVerdict(verdict="trending", ...)``
     - **numeric** resolution (e.g. ``"9"``) combined with a comparison
-      ``expect`` (e.g. ``">=8"``) — emit a Target-shape verdict:
-      ``met`` iff the comparison holds, otherwise ``unmet``.
+      ``expect`` (e.g. ``">=8"``) — ``met`` iff the comparison holds,
+      otherwise ``unmet`` (the survey path).
 
     Raises ``ValueError`` if the pending file is not actually resolved or if
     the resolution is missing / unrecognised.
@@ -189,7 +192,7 @@ def resolve_to_verdict(pf: PendingFile) -> ItemVerdict:
 
     # Numeric (survey) branch — kicks in when the resolution parses as a number
     # AND ``expect`` is a comparison expression. Surveys flow through this
-    # branch; the legacy human yes/no flow falls through to the literal match
+    # branch; the human yes/no/partial flow falls through to the literal match
     # below.
     numeric_value = _try_numeric(first_line)
     if numeric_value is not None:
@@ -222,12 +225,21 @@ def resolve_to_verdict(pf: PendingFile) -> ItemVerdict:
                     raw={"resolution": pf.resolution},
                 )
 
-    # Legacy yes / no / partial branch.
+    # Human yes / no / partial branch. A human verdict is always a Target
+    # verdict (spec §2.2): yes → met, no → unmet, partial → trending.
     if resolution == "yes":
-        return ItemVerdict(verdict="pass", last_observed=now)
-    if resolution in {"no", "partial"}:
+        return ItemVerdict(verdict="met", value=first_line, last_observed=now)
+    if resolution == "no":
         return ItemVerdict(
-            verdict="fail",
+            verdict="unmet",
+            value=first_line,
+            last_observed=now,
+            raw={"resolution": pf.resolution},
+        )
+    if resolution == "partial":
+        return ItemVerdict(
+            verdict="trending",
+            value=first_line,
             last_observed=now,
             raw={"resolution": pf.resolution},
         )

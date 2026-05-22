@@ -9,7 +9,6 @@ Schema:
     {
       "density":   "dense" | "relaxed",
       "sidebar":   "grouped" | "flat" | "tree",
-      "dashboard": "cockpit" | "arc" | "inbox",
       "intent":    "single" | "split",
       "logs":      "timeline" | "table",
       "theme":     "light" | "dark",
@@ -31,7 +30,6 @@ COOKIE_NAME = "i2e_console_prefs"
 DEFAULT_PREFS: dict[str, str] = {
     "density": "relaxed",
     "sidebar": "grouped",
-    "dashboard": "cockpit",
     "intent": "split",
     "logs": "timeline",
     "theme": "light",

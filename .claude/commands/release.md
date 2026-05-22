@@ -30,7 +30,7 @@ Parse `$ARGUMENTS`:
    at build time.
 
 4. Rebuild bundles: run `./tasks.ps1 bundle`. Confirm output reports
-   "built 13 skills" and lists `dist/claude-plugin`, `dist/agentskills`,
+   "built 16 skills" and lists `dist/claude-plugin`, `dist/agentskills`,
    and the two zips.
 
 5. Spot-check the rebuild bumped the version. Read at minimum:

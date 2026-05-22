@@ -9,7 +9,7 @@ metadata:
 
 # i2e-intent
 
-Walks the user through authoring or editing one Capability file. Refuses to save invalid intents (missing provider, unknown provider, zero evidence items).
+Walks the user through authoring or editing one Capability file. Refuses to save invalid intents (missing provider, unknown provider, zero evidence items, or a human/subjective provider on a non-target item).
 
 ## When to use
 - The user says "I want to add a capability called X"
@@ -24,6 +24,14 @@ Walks the user through authoring or editing one Capability file. Refuses to save
 ## Outputs
 - `.i2e/intents/<slug>.md` (created or updated)
 - Validation report (empty on success)
+
+## Item types
+Each evidence item is a **case** or a **target** (spec §2.2). A case is
+something the agent verifies itself, programmatically (`provider: pytest`).
+A target needs a provider, the passage of time, or a human — and
+**anything a human must judge is a target**. `provider: human` and
+`provider: survey` are valid only on `type: target`; the save gate rejects
+them on a case or a constraint.
 
 ## Workflow
 1. Resolve or prompt for the capability slug

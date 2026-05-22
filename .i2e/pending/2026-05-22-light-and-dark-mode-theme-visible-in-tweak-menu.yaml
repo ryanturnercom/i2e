@@ -1,0 +1,26 @@
+status: resolved
+kind: human_evaluation
+capability: light-and-dark-mode
+item_id: theme-visible-in-tweak-menu
+asked_at: '2026-05-22T02:44:30.896656Z'
+escalated_at: null
+reason: null
+expect: yes — the Tweaks panel shows a Light/Dark theme control and the chosen mode
+  survives a page refresh
+observed: null
+attempts: []
+ask: Open the console and click the gear icon to open the Tweaks panel. Confirm a
+  Light/Dark mode (theme) control is listed there alongside Density, Sidebar, etc.,
+  switch it to Dark, then reload the page. Is the theme control present and does the
+  Dark choice survive the refresh?
+verdict_options:
+- 'yes'
+- 'no'
+- partial
+resolution: 'yes
+
+
+  it works'
+url: http://127.0.0.1:4230/
+steps: null
+screenshot: null

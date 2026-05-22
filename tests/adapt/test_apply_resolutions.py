@@ -346,7 +346,7 @@ def test_end_to_end_plan_escalate_apply(
 # ── human_evaluation resolutions (yes/no/partial → verdict) ──────────────────
 
 
-def test_human_evaluation_yes_with_notes_resolves_to_pass(
+def test_human_evaluation_yes_with_notes_resolves_to_met(
     project, write_intent, write_current_for
 ):
     _intent(write_intent)
@@ -364,7 +364,7 @@ def test_human_evaluation_yes_with_notes_resolves_to_pass(
     assert applied[0].item_id == "code-generated"
 
     current = read_current(project, "shorten-url")
-    assert current.items["code-generated"].verdict == "pass"
+    assert current.items["code-generated"].verdict == "met"
     # attempts_used carried over from the prior record.
     assert current.items["code-generated"].attempts_used == 2
     # Pending archived.
@@ -372,7 +372,7 @@ def test_human_evaluation_yes_with_notes_resolves_to_pass(
     assert (logs_dir(project) / pp.name).exists()
 
 
-def test_human_evaluation_no_resolves_to_fail(
+def test_human_evaluation_no_resolves_to_unmet(
     project, write_intent, write_current_for
 ):
     _intent(write_intent)
@@ -387,7 +387,7 @@ def test_human_evaluation_no_resolves_to_fail(
     assert len(applied) == 1
 
     current = read_current(project, "shorten-url")
-    assert current.items["code-generated"].verdict == "fail"
+    assert current.items["code-generated"].verdict == "unmet"
     assert not pp.exists()
 
 

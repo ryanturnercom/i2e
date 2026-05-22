@@ -23,6 +23,7 @@ OpenCode, OpenHands, Codex, and others. See
 - `i2e-report` — see `i2e-report/SKILL.md`
 - `i2e-serve` — see `i2e-serve/SKILL.md`
 - `i2e-spec` — see `i2e-spec/SKILL.md`
+- `i2e-watch` — see `i2e-watch/SKILL.md`
 
 ## Install
 

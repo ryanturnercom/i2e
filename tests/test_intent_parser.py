@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from datetime import date
 from pathlib import Path
 
@@ -156,3 +157,66 @@ def test_description_with_subheadings(tmp_path: Path):
     cap = intent.parse_intent(f)
     assert "## Background" in cap.description
     assert len(cap.evidence) == 1
+
+
+# ---------- parse_intent memoisation ----------
+
+_MINIMAL = (
+    "---\n"
+    "capability: {cap}\n"
+    "created: 2026-01-01\n"
+    "updated: 2026-01-01\n"
+    "version: {version}\n"
+    "status: active\n"
+    "---\n"
+    "\n"
+    "Desc.\n"
+    "\n"
+    "## Evidence of success\n"
+    "\n"
+    "- id: a\n"
+    "  type: case\n"
+    "  provider: pytest\n"
+    "  query: q\n"
+    "  expect: passes\n"
+)
+
+
+def test_parse_intent_is_memoised(tmp_path: Path):
+    """Re-parsing an unchanged file is served from the cache, not re-read."""
+    f = tmp_path / "cap-a.md"
+    f.write_text(_MINIMAL.format(cap="cap-a", version=1), encoding="utf-8")
+
+    intent._parse_intent_cached.cache_clear()
+    intent.parse_intent(f)
+    intent.parse_intent(f)
+    assert intent._parse_intent_cached.cache_info().hits >= 1
+
+
+def test_parse_intent_returns_independent_copies(tmp_path: Path):
+    """A mutated result must not poison a later parse of the same file."""
+    f = tmp_path / "cap-b.md"
+    f.write_text(_MINIMAL.format(cap="cap-b", version=1), encoding="utf-8")
+
+    first = intent.parse_intent(f)
+    first.frontmatter.version = 999
+    first.evidence[0].id = "mutated"
+    first.evidence.append(first.evidence[0])
+
+    second = intent.parse_intent(f)
+    assert first is not second
+    assert second.frontmatter.version == 1
+    assert [e.id for e in second.evidence] == ["a"]
+
+
+def test_parse_intent_reparses_after_edit(tmp_path: Path):
+    """An mtime change invalidates the cached parse."""
+    f = tmp_path / "cap-c.md"
+    f.write_text(_MINIMAL.format(cap="cap-c", version=1), encoding="utf-8")
+    assert intent.parse_intent(f).frontmatter.version == 1
+
+    f.write_text(_MINIMAL.format(cap="cap-c", version=2), encoding="utf-8")
+    # Force a distinct mtime so the test never flakes on coarse fs resolution.
+    st = f.stat()
+    os.utime(f, ns=(st.st_atime_ns, st.st_mtime_ns + 1_000_000))
+    assert intent.parse_intent(f).frontmatter.version == 2

@@ -39,7 +39,6 @@ def test_server_renders_variant_from_cookie():
     assert prefs["density"] == "dense"
     assert prefs["sidebar"] == "tree"
     # Unset values fall back to defaults.
-    assert prefs["dashboard"] == DEFAULT_PREFS["dashboard"]
     assert prefs["intent"] == DEFAULT_PREFS["intent"]
     assert prefs["logs"] == DEFAULT_PREFS["logs"]
 
@@ -83,3 +82,27 @@ def test_theme_axis_present_and_persists(tmp_path):
     assert "theme-dark" in page(
         root=tmp_path, active="dashboard", body="x", cookie=cookie
     )
+
+
+def test_theme_axis_in_panel(tmp_path):
+    """A full page render mounts the Tweaks panel with the Theme axis.
+
+    The ``theme-axis-in-panel`` evidence item: the Light/Dark Theme
+    select is added to the panel alongside the existing layout axes,
+    not in place of them.
+    """
+    _bootstrap(tmp_path)
+    html = page(root=tmp_path, active="dashboard", body="x")
+
+    # The Tweaks panel is mounted in the rendered page.
+    assert 'class="tweaks-panel"' in html
+
+    # A labelled Light/Dark Theme select.
+    assert "<span>Theme</span>" in html
+    assert 'select name="theme"' in html
+    assert '<option value="light"' in html
+    assert '<option value="dark"' in html
+
+    # Added, not swapped in — the existing layout axes are still there.
+    for label in ("Density", "Sidebar", "Intent detail"):
+        assert f"<span>{label}</span>" in html

@@ -48,7 +48,7 @@ def test_first_run_writes_pending_and_records_awaiting_human(
         evidence=[
             {
                 "id": "subjective",
-                "type": "case",
+                "type": "target",
                 "provider": "human",
                 "query": "Does it feel right?",
                 "expect": "yes",
@@ -85,7 +85,7 @@ def test_rerun_while_open_keeps_awaiting_no_new_file(
         evidence=[
             {
                 "id": "subjective",
-                "type": "case",
+                "type": "target",
                 "provider": "human",
                 "query": "'feel right'",
                 "expect": "yes",
@@ -114,7 +114,7 @@ def test_rerun_while_open_keeps_awaiting_no_new_file(
     assert v.pending == files_before[0]
 
 
-def test_resolved_pending_translates_to_pass_and_archives(
+def test_resolved_pending_translates_to_met_and_archives(
     project: Path, write_intent, patch_providers
 ):
     write_intent(
@@ -122,7 +122,7 @@ def test_resolved_pending_translates_to_pass_and_archives(
         evidence=[
             {
                 "id": "subjective",
-                "type": "case",
+                "type": "target",
                 "provider": "human",
                 "query": "'feel right'",
                 "expect": "yes",
@@ -144,9 +144,9 @@ def test_resolved_pending_translates_to_pass_and_archives(
     atomic_write(pending_file, dump_yaml(pf_resolved.model_dump(mode="json")))
 
     # Re-run evidence: the runner should pick up the resolution, archive the
-    # file, and record verdict=pass.
+    # file, and record verdict=met (a human item is always a target).
     summary = run(project, "demo")
-    assert summary.pass_ == 1
+    assert summary.met == 1
     assert summary.awaiting_human == 0
 
     # Pending file moved to logs/.
@@ -159,16 +159,16 @@ def test_resolved_pending_translates_to_pass_and_archives(
     cur = read_current(project, "demo")
     assert cur is not None
     v = cur.items["subjective"]
-    assert v.verdict == "pass"
+    assert v.verdict == "met"
 
 
-def test_resolved_no_becomes_fail(project: Path, write_intent, patch_providers):
+def test_resolved_no_becomes_unmet(project: Path, write_intent, patch_providers):
     write_intent(
         "demo",
         evidence=[
             {
                 "id": "subjective",
-                "type": "case",
+                "type": "target",
                 "provider": "human",
                 "query": "'feel right'",
                 "expect": "yes",
@@ -186,19 +186,19 @@ def test_resolved_no_becomes_fail(project: Path, write_intent, patch_providers):
     atomic_write(pending_file, dump_yaml(pf_resolved.model_dump(mode="json")))
 
     summary = run(project, "demo")
-    assert summary.fail == 1
+    assert summary.unmet == 1
 
     cur = read_current(project, "demo")
     assert cur is not None
     v = cur.items["subjective"]
-    assert v.verdict == "fail"
+    assert v.verdict == "unmet"
     assert v.raw.get("resolution") == "no"
 
 
 # ---------- resolve_to_verdict unit tests ----------
 
 
-def test_resolve_to_verdict_yes_is_pass():
+def test_resolve_to_verdict_yes_is_met():
     pf = PendingFile(
         status="resolved",
         kind="human_evaluation",
@@ -208,11 +208,25 @@ def test_resolve_to_verdict_yes_is_pass():
         resolution="yes",
     )
     v = resolve_to_verdict(pf)
-    assert v.verdict == "pass"
+    assert v.verdict == "met"
     assert v.last_observed is not None
 
 
-def test_resolve_to_verdict_partial_is_fail():
+def test_resolve_to_verdict_no_is_unmet():
+    pf = PendingFile(
+        status="resolved",
+        kind="human_evaluation",
+        capability="x",
+        item_id="i",
+        ask="?",
+        resolution="no",
+    )
+    v = resolve_to_verdict(pf)
+    assert v.verdict == "unmet"
+    assert v.raw["resolution"] == "no"
+
+
+def test_resolve_to_verdict_partial_is_trending():
     pf = PendingFile(
         status="resolved",
         kind="human_evaluation",
@@ -222,7 +236,7 @@ def test_resolve_to_verdict_partial_is_fail():
         resolution="partial",
     )
     v = resolve_to_verdict(pf)
-    assert v.verdict == "fail"
+    assert v.verdict == "trending"
     assert v.raw["resolution"] == "partial"
 
 

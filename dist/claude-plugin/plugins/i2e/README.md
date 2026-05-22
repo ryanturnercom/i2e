@@ -1,7 +1,7 @@
 # i2e plugin
 
 A Claude Code plugin that ships the Intent-to-Evidence (Simplified) SDLC as
-13 model-invoked skills.
+16 model-invoked skills.
 
 ## What it does
 
